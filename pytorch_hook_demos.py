@@ -198,7 +198,6 @@ def main():
     )
 
     model = Net().to(device)
-    criterion = nn.NLLLoss()
 
     if args.rule_type == "vanishing_grad":
         lr, momentum = 1.0, 0.9
@@ -211,7 +210,6 @@ def main():
 
     hook = create_hook(output_dir=args.output_uri, module=model, hook_type=args.hook_type)
     hook.register_hook(model)
-    hook.register_loss(criterion)
 
     for epoch in range(1, args.epochs + 1):
         if args.mode:

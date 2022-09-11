@@ -10,9 +10,66 @@ import smdebug.pytorch as smd
 from smdebug.pytorch import Hook, SaveConfig
 from smdebug.rules.rule import Rule
 
-import re
 import numpy as np
 import matplotlib.pyplot as plt
+
+class AllValuesZeroRule():
+    def __init__(self, base_trial, threshold_layer=1):
+        super().__init__()
+        self.threshold_layer = float(threshold_layer)
+        self.base_trial = base_trial
+
+    def invoke_at_step(self, step, layer_names):
+        step_zeros = list()
+        for tname in layer_names:
+            tensor = self.base_trial.tensor(tname).value(step)
+            percent = self.compute_zero_values(tensor)
+            if percent >= self.threshold_layer:
+                step_zeros.append([tname, percent, True])
+            else :
+                step_zeros.append([tname, percent, False])
+        return step_zeros
+
+    def compute_zero_values(self, tensor):
+        t = tensor.reshape(-1)
+        size_t = np.size(t)
+        cnt = 0
+        for i in range(size_t):
+            if t[i].item() == 0:
+                cnt += 1
+        return float(cnt/size_t)
+
+    def get_output_layer_names(self):
+        layer_names = list()
+        for tname in self.base_trial.tensor_names(collection="all"):
+            if tname.find('output') != -1:
+                layer_names.append(tname)
+        return layer_names
+    
+    def draw_plot(self, steps, layer_percents):
+        plt.figure(figsize=(20,8), dpi=90)
+        for key in layer_percents:
+            print(key)
+            plt.figure(figsize=(20,8), dpi=90)
+            plt.plot(steps, layer_percents[key], lw=2, ls='-', c='r', alpha=0.1)
+            plt.show() 
+
+    def work(self):
+        steps = self.base_trial.steps()
+        layer_names = self.get_output_layer_names()
+        layer_percents = dict()
+        for lname in layer_names:
+            percents = list()
+            layer_percents[lname] = percents               
+        for step in steps:
+            print("step ", step, ":")
+            step_zeros = self.invoke_at_step(step, layer_names) 
+            for step_zero in step_zeros:
+                layer_percents[step_zero[0]].append(step_zero[1])
+                if step_zero[2] == True and step != steps[0]:
+                    print(step_zero[0], ": All values zero")
+                else: print(step_zero[0], ": Not all values zero")
+        self.draw_plot(steps, layer_percents)
 
 class SmallVarianceRule():
     def __init__(self, base_trial, min_threshold=0.0001):
@@ -90,13 +147,13 @@ class DeadReluRule():
     def invoke_at_step(self, last_step, cur_step, layer_names):
         step_relus = list()
         for tname in layer_names:
-                last_tensor = self.base_trial.tensor(tname).value(last_step)
-                cur_tensor = self.base_trial.tensor(tname).value(cur_step)
-                percent = self.compute_dying_relus(last_tensor, cur_tensor)
-                if percent >= self.threshold_layer:
-                    step_relus.append([tname, percent, True])
-                else :
-                    step_relus.append([tname, percent, False])
+            last_tensor = self.base_trial.tensor(tname).value(last_step)
+            cur_tensor = self.base_trial.tensor(tname).value(cur_step)
+            percent = self.compute_dying_relus(last_tensor, cur_tensor)
+            if percent >= self.threshold_layer:
+                step_relus.append([tname, percent, True])
+            else :
+                step_relus.append([tname, percent, False])
         return step_relus
     
     def compute_dying_relus(self, last_tensor, cur_tensor):
@@ -145,7 +202,7 @@ class DeadReluRule():
 
 
 class SigmondSaturationRule():
-    def __init__(self, base_trial, threshold_gradients=0.0001, threshold_layer=0.4):
+    def __init__(self, base_trial, threshold_gradients=0.0001, threshold_layer=0.6):
         super().__init__()
         self.threshold_gradients = float(threshold_gradients)
         self.threshold_layer = float(threshold_layer)
@@ -176,7 +233,7 @@ class SigmondSaturationRule():
     def get_sig_layer_names(self):
         layer_names = list()
         for tname in self.base_trial.tensor_names(collection="all"):
-            if tname.find('sigmond') != -1 and tname.find('output') != -1:
+            if tname.find('sigmoid') != -1 and tname.find('output') != -1:
                 layer_names.append(tname)
         return layer_names
 
@@ -202,8 +259,8 @@ class SigmondSaturationRule():
             for step_sig in step_sigs:
                 layer_percents[step_sig[0]].append(step_sig[1])
                 if step_sig[2] == True and step != steps[0]:
-                    print(step_sig[0], ": Sigmond saturation")
-                else: print(step_sig[0], ": Normal Sigmond")
+                    print(step_sig[0], ": Sigmoid saturation")
+                else: print(step_sig[0], ": Normal Sigmoid")
             last_step = step
         self.draw_plot(steps, layer_percents)
 

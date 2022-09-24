@@ -202,7 +202,7 @@ class DeadReluRule():
 
 
 class SigmondSaturationRule():
-    def __init__(self, base_trial, threshold_gradients=0.0001, threshold_layer=0.6):
+    def __init__(self, base_trial, threshold_gradients=0.0001, threshold_layer=0.45):
         super().__init__()
         self.threshold_gradients = float(threshold_gradients)
         self.threshold_layer = float(threshold_layer)
@@ -265,7 +265,7 @@ class SigmondSaturationRule():
         self.draw_plot(steps, layer_percents)
 
 class TanhSaturationRule():
-    def __init__(self, base_trial, threshold_gradients=0.0001, threshold_layer=0.4):
+    def __init__(self, base_trial, threshold_gradients=0.0001, threshold_layer=0.45):
         super().__init__()
         self.threshold_gradients = float(threshold_gradients)
         self.threshold_layer = float(threshold_layer)
@@ -276,7 +276,7 @@ class TanhSaturationRule():
         for tname in layer_names:
                 last_tensor = self.base_trial.tensor(tname).value(last_step)
                 cur_tensor = self.base_trial.tensor(tname).value(cur_step)
-                percent = self.compute_dying_sigs(last_tensor, cur_tensor)
+                percent = self.compute_dying_tanhs(last_tensor, cur_tensor)
                 if percent >= self.threshold_layer:
                     step_tanhs.append([tname, percent, True])
                 else :
@@ -322,7 +322,7 @@ class TanhSaturationRule():
             for step_tanh in step_tanhs:
                 layer_percents[step_tanh[0]].append(step_tanh[1])
                 if step_tanh[2] == True and step != steps[0]:
-                    print(step_tanh[0], ": Sigmond saturation")
-                else: print(step_tanh[0], ": Normal Sigmond")
+                    print(step_tanh[0], ": Tanh saturation")
+                else: print(step_tanh[0], ": Normal Tanh")
             last_step = step
         self.draw_plot(steps, layer_percents)

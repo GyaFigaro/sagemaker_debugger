@@ -1,144 +1,220 @@
+from re import T
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import rule.utils
+import smdebug as smd
 
 class Rule_ActivationFunctions():
     def __init__(self, base_trial, 
-                 rtol=1e-05, atol=1e-08, 
-                 threshold_layer=0.4, 
+                 threshold_layer = 0.4, 
+                 threshold_tanh_min = -9.4999,
+                 threshold_tanh_max = 9.4999,
+                 threshold_sigmoid_min = -23,
+                 threshold_sigmoid_max = 16.99999,
                  show_steps=5):
         super().__init__()
         self.base_trial = base_trial
-        self.rtol = float(rtol)
-        self.atol = float(atol)
         self.threshold_layer = float(threshold_layer)
+        self.threshold_tanh_min = float(threshold_tanh_min)
+        self.threshold_tanh_max = float(threshold_tanh_max)
+        self.threshold_sigmoid_min = float(threshold_sigmoid_min)
+        self.threshold_sigmoid_max = float(threshold_sigmoid_max)
         self.show_steps = show_steps
-        self.path = './debug_info/tensor'
+        self.path = './debug_info/activationfunction'
         
         
-    def get_output_layer_names(self):
+    def get_output_layer_names(self, regex):
         layer_names = list()
-        for tname in self.base_trial.tensor_names(collection="all"):
+        for tname in self.base_trial.tensor_names(regex=regex, mode=smd.modes.EVAL):
             if tname.find('output') != -1:
                 layer_names.append(tname)
         return layer_names
 
-    def make_plot(self, step, dicts, rule_path):
-        plot_path = rule_path + '/' + str(step) + '.png'
-        print(plot_path)
-        x_label = list(dicts.keys())
-        y_label = list(dicts.values())
-        plt.figure(figsize=(100,40), dpi=90)
-        plt.plot(x_label, y_label, lw=2, ls='-', c='r', alpha=0.1)
-        plt.savefig(str(plot_path), dpi=90, bbox_inches = 'tight')
+    def make_data_chart(self, step, dicts, rule_path):
+        chart_path = rule_path + '/' + str(step) + '.csv'
+        df = pd.DataFrame.from_dict(data=dicts, orient='columns')
+        df.to_csv(chart_path, header=True, sep=' ', index=False)
+        # plot_path = rule_path + '/' + str(step) + '.png'
+        # print(plot_path)
+        # x_label = list(dicts.keys())
+        # y_label = list(dicts.values())
+        # plt.figure(figsize=(100,40), dpi=90)
+        # plt.plot(x_label, y_label, lw=2, ls='-', c='r', alpha=0.1)
+        # plt.savefig(str(plot_path), dpi=90, bbox_inches = 'tight')
         # plt.show()
 
-    def make_chart(self, steps, dicts, rule_path):
+    def make_result_chart(self, steps, dicts, rule_path):
         chart_path = rule_path + '/result.csv'
         df = pd.DataFrame({'step':steps})
         cnt = 1
         for key in dicts:
             df.insert(cnt, key, dicts[key])
             cnt += 1
-        df.to_csv(chart_path, index=True, header=True, sep=' ')
+        df.to_csv(chart_path, header=True, sep=' ', index=False)
     
-    def compute_zero_values(self, tensor):
-        t = tensor.reshape(-1)
-        size_t = np.size(t)
+    def compute_dying_relus(self, last_tensor, cur_tensor):
+        last_t = last_tensor.reshape(-1)
+        cur_t = cur_tensor.reshape(-1)
+        size_t = np.size(last_t)
         cnt = 0
         for i in range(size_t):
-            if t[i].item() == 0:
+            if last_t[i].item() == 0 and cur_t[i].item() == 0:
                 cnt += 1
         return float(cnt/size_t)
 
-    def invoke_at_step(self, cur_step, layer_names, rule_id, last_step=None):
-        if rule_id == 12:
-            step_zeros = list()
-            for tname in layer_names:
-                tensor = self.base_trial.tensor(tname).value(cur_step)
-                percent = self.compute_zero_values(tensor)
-                if percent >= self.threshold_layer:
-                    step_zeros.append([tname, percent, True])
-                else :
-                    step_zeros.append([tname, percent, False])
-            return step_zeros
+    def compute_saturation(self, regex, tensor):
+        t = tensor.reshape(-1)
+        size_t = np.size(t)
+        cnt = 0
 
-        if rule_id == 13:
+        if regex == "sigmoid":
+            for i in range(size_t):
+                if t[i].item() >= self.threshold_sigmoid_max or t[i].item() <= self.threshold_sigmoid_min:
+                    cnt += 1
+
+        if regex == "tanh":
+            for i in range(size_t):
+                if t[i].item() >= self.threshold_tanh_max or t[i].item() <= self.threshold_tanh_min:
+                    cnt += 1
+
+        return float(cnt/size_t)
+
+    def invoke_at_step(self, cur_step, layer_names, rule_id, last_step=None):
+        if rule_id == 17:
+            step_relus = list()
+            for tname in layer_names:
+                last_tensor = self.base_trial.tensor(tname).value(step_num=last_step, mode=smd.modes.TRAIN)
+                cur_tensor = self.base_trial.tensor(tname).value(step_num=cur_step, mode=smd.modes.TRAIN)
+                percent = self.compute_dying_relus(last_tensor, cur_tensor)
+                if percent >= self.threshold_layer:
+                    step_relus.append([tname, percent, True])
+                else :
+                    step_relus.append([tname, percent, False])
+            return step_relus
+
+        if rule_id == 15:
             step_tensors = list()
             for tname in layer_names:
-                last_t = self.base_trial.tensor(tname).value(last_step)
-                cur_t = self.base_trial.tensor(tname).value(cur_step)
-                is_unchanged = np.allclose(
-                    last_t, cur_t, 
-                    rtol=self.rtol, 
-                    atol=self.atol,
-                    equal_nan=False)
-                step_tensor = (tname, is_unchanged)
-                step_tensors.append(step_tensor)
+                tensor = self.base_trial.tensor(tname).value(step_num=cur_step, mode=smd.modes.TRAIN)
+                percent = self.compute_saturation("sigmoid", tensor)
+                if percent >= self.threshold_layer:
+                    step_tensors.append([tname, percent, True])
+                else :
+                    step_tensors.append([tname, percent, False])
+            return step_tensors
+
+        if rule_id == 16:
+            step_tensors = list()
+            for tname in layer_names:
+                tensor = self.base_trial.tensor(tname).value(step_num=cur_step, mode=smd.modes.TRAIN)
+                percent = self.compute_saturation("tanh", tensor)
+                if percent >= self.threshold_layer:
+                    step_tensors.append([tname, percent, True])
+                else :
+                    step_tensors.append([tname, percent, False])
             return step_tensors
     
-    def all_values_zero(self):
-        path = self.path + '/AllZeroValues'
+    def sigmoid_saturation(self):
+        path = self.path + '/Sigmoidsaturation'
         if not os.path.exists(path):
             os.makedirs(path)
 
-        steps = self.base_trial.steps()
-        layer_names = self.base_trial.tensor_names(regex="output")
-        percents = dict.fromkeys(layer_names)
+        steps = self.base_trial.steps(mode=smd.modes.TRAIN)
+        layer_names = self.get_output_layer_names(regex="sigmoid")
+        percents = {'layers':[], 'percents':[]}
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
             results[lname] = list()
-
-        cnt = 0            
+           
         for step in steps:
-            is_occur = False
+            percents['layers'].clear()
+            percents['percents'].clear()
+            print("step ", step, ":")
+            step_sigs = self.invoke_at_step(cur_step=step, 
+                                             layer_names=layer_names, rule_id=15) 
+            for step_sig in step_sigs:
+                percents['layers'].append(step_sig[0])
+                percents['percents'].append(step_sig[1])
+                if step_sig[2] == True and step != steps[0]:
+                    # print(step_zero[0], ": Sigmoid saturation")
+                    results[step_sig[0]].append("Sigmoid saturation")
+
+                else:
+                    # print(step_zero[0], ": Normal Sigmoid")
+                    results[step_sig[0]].append("Normal Sigmoid")
+
+            self.make_data_chart(step, percents, path)
+
+        self.make_result_chart(steps, results, path)
+
+    def tanh_saturation(self):
+        path = self.path + '/Tanhsaturation'
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        steps = self.base_trial.steps(mode=smd.modes.TRAIN)
+        layer_names = self.get_output_layer_names(regex="tanh")
+        percents = {'layers':[], 'percents':[]}
+        results = dict.fromkeys(layer_names)
+        for lname in layer_names:
+            results[lname] = list()
+          
+        for step in steps:
+            percents['layers'].clear()
+            percents['percents'].clear()
             print("step ", step, ":")
             step_zeros = self.invoke_at_step(cur_step=step, 
-                                             layer_names=layer_names, rule_id=12) 
-            for step_zero in step_zeros:
-                percents[step_zero[0]] = step_zero[1]
-                if step_zero[2] == True and step != steps[0]:
-                    # print(step_zero[0], ": All values zero")
-                    results[step_zero[0]].append("All values zero")
-                    is_occur = True
+                                             layer_names=layer_names, rule_id=16) 
+            for step_tanh in step_zeros:
+                percents['layers'].append(step_tanh[0])
+                percents['percents'].append(step_tanh[1])
+                if step_tanh[2] == True and step != steps[0]:
+                    # print(step_zero[0], ": Tanh saturation")
+                    results[step_tanh[0]].append("Tanh saturation")
                 else:
-                    # print(step_zero[0], ": Not all values zero")
-                    results[step_zero[0]].append("Not all values zero")
+                    # print(step_zero[0], ": Normal Tanh")
+                    results[step_tanh[0]].append("Normal Tanh")
 
-            if is_occur and cnt < self.show_steps: 
-                self.make_plot(step, percents, path)
-                cnt += 1
+            self.make_data_chart(step, percents, path)
 
-        self.make_chart(steps, results, path)
+        self.make_result_chart(steps, results, path)
 
-    def values_unchanged(self):
-        path = self.path + '/ValuesUnchanged'
+    def dying_relu(self):
+        path = self.path + '/Dyingrelu'
         if not os.path.exists(path):
             os.makedirs(path)
 
-        steps = self.base_trial.steps()
-        layer_names = self.base_trial.tensor_names(collection="weights")
+        steps = self.base_trial.steps(mode=smd.modes.TRAIN)
+        layer_names = self.get_output_layer_names(regex="relu")
+        percents = {'layers':[], 'percents':[]}
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
             results[lname] = list()
 
+        cnt = 0
         last_step = steps[0]
         for step in steps: 
+            percents['layers'].clear()
+            percents['percents'].clear()
             print("step ", step, ":")
             step_tensors = self.invoke_at_step(last_step=last_step, cur_step=step, 
-                                              layer_names = layer_names, rule_id=13) 
-            for step_var in step_tensors:
-                if step_var[1] == True and step != steps[0]:
-                    # print(step_var[0], ": Tensors were unchanged")
-                    results[step_var[0]].append("Tensors were unchanged")
+                                              layer_names = layer_names, rule_id=17) 
+            for step_relu in step_tensors:
+                percents['layers'].append(step_relu[0])
+                percents['percents'].append(step_relu[1])
+                if step_relu[2] == True and step != steps[0]:
+                    # print(step_var[0], ": Dying relu")
+                    results[step_relu[0]].append("Dying relu")
                 else :
-                    # print(step_var[0], ": Tensors changed properly")
-                    results[step_var[0]].append("Tensors changed properly")
+                    # print(step_var[0], ": Normal relu")
+                    results[step_relu[0]].append("Normal relu")
             last_step = step
+ 
+            self.make_data_chart(step, percents, path)
 
-        self.make_chart(steps, results, path)
+        self.make_result_chart(steps, results, path)
 
 
 

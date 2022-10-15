@@ -12,10 +12,14 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 
 # First Party
+import numpy as np
 import smdebug.pytorch as smd
 from smdebug.pytorch import Hook, SaveConfig
 
 from rule.rule_run import debug
+
+Losses1 = []
+Losses2 = []
 
 class Net(nn.Module):
     def __init__(self):
@@ -42,30 +46,36 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-def train(args, model, device, train_loader, optimizer, epoch):
+def train(args, model, device, train_loader, optimizer, epoch, criterion):
+    global Losses
     model.train()
     count = 0
+    correct = 0
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(Variable(data, requires_grad=True))
-        loss = F.nll_loss(output, target)
+        loss = criterion(output, target)
         loss.backward()
         count += 1
         optimizer.step()
+        pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+        correct += pred.eq(target.view_as(pred)).sum().item()
+        # 实时显示准确率
         if batch_idx % args.log_interval == 0:
             print(
-                "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    epoch,
+                "Train Batch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
+                    batch_idx,
                     batch_idx * len(data),
                     len(train_loader.dataset),
                     100.0 * batch_idx / len(train_loader),
                     loss.item(),
                 )
             )
+    
+    return 100.0 * correct / len(train_loader.dataset)
 
-
-def test(args, model, device, test_loader):
+def test(args, model, device, test_loader, criterion):
     model.eval()
     test_loss = 0
     correct = 0
@@ -73,9 +83,10 @@ def test(args, model, device, test_loader):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, reduction="sum").item()  # sum up batch loss
+            test_loss += criterion(output, target).item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
+            Losses2.append(criterion(output, target).item())
 
     test_loss /= len(test_loader.dataset)
 
@@ -84,7 +95,8 @@ def test(args, model, device, test_loader):
             test_loss, correct, len(test_loader.dataset), 100.0 * correct / len(test_loader.dataset)
         )
     )
-
+    
+    return 100.0 * correct / len(test_loader.dataset)
 
 # Create a hook. The initilization of hook determines which tensors
 # are logged while training is in progress.
@@ -95,7 +107,7 @@ def create_hook(output_dir, module=None, hook_type="saveall"):
     if hook_type == "saveall":
         hook = Hook(
             out_dir=output_dir,
-            save_config=SaveConfig(save_steps=[i * 10 for i in range(20)]),
+            save_config=SaveConfig(save_interval=100),
             save_all=True,
         )
     elif hook_type == "module-input-output":
@@ -108,12 +120,12 @@ def create_hook(output_dir, module=None, hook_type="saveall"):
         # Create a hook that logs weights, biases, gradients and inputs/outputs of model every 5 steps from steps 0-100 while training.
         hook = Hook(
             out_dir=output_dir,
-            save_config=SaveConfig(save_steps=[i * 5 for i in range(20)]),
+            save_config=SaveConfig(save_interval=100),
             include_collections=["weights", "gradients", "biases", "l_mod"],
         )
         hook.get_collection("l_mod").add_module_tensors(module, inputs=True, outputs=True)
     elif hook_type == "weights-bias-gradients":
-        save_config = SaveConfig(save_steps=[i * 5 for i in range(20)])
+        save_config = SaveConfig(save_interval=100)
         # Create a hook that logs ONLY weights, biases, and gradients every 5 steps (from steps 0-100) while training the model.
         hook = Hook(out_dir=output_dir, save_config=save_config)
     return hook
@@ -132,7 +144,7 @@ def main():
     parser.add_argument(
         "--test-batch-size",
         type=int,
-        default=1000,
+        default=64,
         metavar="N",
         help="input batch size for testing (default: 1000)",
     )
@@ -156,7 +168,7 @@ def main():
         "--output-uri",
         type=str,
         help="output directory to save data in",
-        default="./tmp2/testing/demo",
+        default="./tmp/testing/demo",
     )
     parser.add_argument(
         "--hook-type",
@@ -205,19 +217,26 @@ def main():
         lr, momentum = args.lr, args.momentum
 
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+    criterion = torch.nn.modules.NLLLoss()
+    criterion_test = torch.nn.modules.NLLLoss(reduction="sum")
 
     hook = create_hook(output_dir=args.output_uri, module=model, hook_type=args.hook_type)
     hook.register_hook(model)
+    hook.register_loss(criterion)
 
-    for epoch in range(1, args.epochs + 1):
-        if args.mode:
-            hook.set_mode(smd.modes.TRAIN)
-        train(args, model, device, train_loader, optimizer, epoch)
-        if args.mode:
-            hook.set_mode(smd.modes.EVAL)
-        test(args, model, device, test_loader)
+    accuracy = []
+
+    for epoch in range(3):
+        print("THIS IS EPOCH:  ", epoch)
+        hook.set_mode(smd.modes.TRAIN)
+        accuracy.append(train(args, model, device, train_loader, optimizer, epoch, criterion))
+        hook.set_mode(smd.modes.EVAL)
+        accuracy.append(test(args, model, device, test_loader, criterion))
+        debug(epoch)
+
+    filename = 'accuracy'
+    np.save(filename,accuracy)    
         
-    debug()
 
 if __name__ == "__main__":
     main()

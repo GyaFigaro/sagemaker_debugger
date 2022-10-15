@@ -1,0 +1,12 @@
+layers percents
+NLLLoss_output_0 0.0
+Net_output_0 0.0
+conv1_output_0 0.0
+conv2_output_0 0.0
+fc1_output_0 0.0
+fc2_output_0 0.0
+max_pool2_output_0 0.0
+max_pool_output_0 0.0
+relu_output_0 0.41896875
+sigmoid_output_0 0.0
+tanh_output_0 0.0

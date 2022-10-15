@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import rule.utils
+import smdebug as smd
 
 class Rule_Tensor():
     def __init__(self, base_trial, 
@@ -16,34 +17,31 @@ class Rule_Tensor():
         self.threshold_layer = float(threshold_layer)
         self.show_steps = show_steps
         self.path = './debug_info/tensor'
-        
-        
-    def get_output_layer_names(self):
-        layer_names = list()
-        for tname in self.base_trial.tensor_names(collection="all"):
-            if tname.find('output') != -1:
-                layer_names.append(tname)
-        return layer_names
 
-    def make_plot(self, step, dicts, rule_path):
-        plot_path = rule_path + '/' + str(step) + '.png'
-        print(plot_path)
-        x_label = list(dicts.keys())
-        y_label = list(dicts.values())
-        plt.figure(figsize=(100,40), dpi=90)
-        plt.plot(x_label, y_label, lw=2, ls='-', c='r', alpha=0.1)
-        plt.savefig(str(plot_path), dpi=90, bbox_inches = 'tight')
+    # 制作数据表格
+    def make_data_chart(self, step, dicts, rule_path):
+        chart_path = rule_path + '/' + str(step) + '.csv'
+        df = pd.DataFrame.from_dict(data=dicts, orient='columns')
+        df.to_csv(chart_path, header=True, sep=' ', index=False)
+        # print(plot_path)
+        # x_label = list(dicts.keys())
+        # y_label = list(dicts.values())
+        # plt.figure(figsize=(100,40), dpi=90)
+        # plt.plot(x_label, y_label, lw=2, ls='-', c='r', alpha=0.1)
+        # plt.savefig(str(plot_path), dpi=90, bbox_inches = 'tight')
         # plt.show()
 
-    def make_chart(self, steps, dicts, rule_path):
+    # 制作结果表格
+    def make_result_chart(self, steps, dicts, rule_path):
         chart_path = rule_path + '/result.csv'
         df = pd.DataFrame({'step':steps})
         cnt = 1
         for key in dicts:
             df.insert(cnt, key, dicts[key])
             cnt += 1
-        df.to_csv(chart_path, index=True, header=True, sep=' ')
+        df.to_csv(chart_path, header=True, sep=' ', index=False)
     
+    # 计算张量中0值的百分比
     def compute_zero_values(self, tensor):
         t = tensor.reshape(-1)
         size_t = np.size(t)
@@ -53,11 +51,12 @@ class Rule_Tensor():
                 cnt += 1
         return float(cnt/size_t)
 
+    # step中获取数据
     def invoke_at_step(self, cur_step, layer_names, rule_id, last_step=None):
         if rule_id == 12:
             step_zeros = list()
             for tname in layer_names:
-                tensor = self.base_trial.tensor(tname).value(cur_step)
+                tensor = self.base_trial.tensor(tname).value(step_num=cur_step, mode=smd.modes.TRAIN)
                 percent = self.compute_zero_values(tensor)
                 if percent >= self.threshold_layer:
                     step_zeros.append([tname, percent, True])
@@ -68,8 +67,8 @@ class Rule_Tensor():
         if rule_id == 13:
             step_tensors = list()
             for tname in layer_names:
-                last_t = self.base_trial.tensor(tname).value(last_step)
-                cur_t = self.base_trial.tensor(tname).value(cur_step)
+                last_t = self.base_trial.tensor(tname).value(step_num=last_step, mode=smd.modes.TRAIN)
+                cur_t = self.base_trial.tensor(tname).value(step_num=cur_step, mode=smd.modes.TRAIN)
                 is_unchanged = np.allclose(
                     last_t, cur_t, 
                     rtol=self.rtol, 
@@ -79,47 +78,49 @@ class Rule_Tensor():
                 step_tensors.append(step_tensor)
             return step_tensors
     
+    # AVZ接口
     def all_values_zero(self):
         path = self.path + '/AllZeroValues'
         if not os.path.exists(path):
             os.makedirs(path)
 
-        steps = self.base_trial.steps()
-        layer_names = self.base_trial.tensor_names(regex="output")
-        percents = dict.fromkeys(layer_names)
+        steps = self.base_trial.steps(mode=smd.modes.TRAIN)
+        print("steps: ", steps)
+        layer_names = self.base_trial.tensor_names(regex="output", mode=smd.modes.TRAIN)
+        percents = {'layers':[], 'percents':[]}
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
             results[lname] = list()
-
-        cnt = 0            
+          
         for step in steps:
-            is_occur = False
+            percents['layers'].clear()
+            percents['percents'].clear()
             print("step ", step, ":")
             step_zeros = self.invoke_at_step(cur_step=step, 
                                              layer_names=layer_names, rule_id=12) 
             for step_zero in step_zeros:
-                percents[step_zero[0]] = step_zero[1]
+                percents['layers'].append(step_zero[0])
+                percents['percents'].append(step_zero[1])
                 if step_zero[2] == True and step != steps[0]:
                     # print(step_zero[0], ": All values zero")
                     results[step_zero[0]].append("All values zero")
-                    is_occur = True
                 else:
                     # print(step_zero[0], ": Not all values zero")
                     results[step_zero[0]].append("Not all values zero")
+            
+            self.make_data_chart(step, percents, path)
 
-            if is_occur and cnt < self.show_steps: 
-                self.make_plot(step, percents, path)
-                cnt += 1
+        self.make_result_chart(steps, results, path)
 
-        self.make_chart(steps, results, path)
-
+    # VU接口
     def values_unchanged(self):
         path = self.path + '/ValuesUnchanged'
         if not os.path.exists(path):
             os.makedirs(path)
 
-        steps = self.base_trial.steps()
-        layer_names = self.base_trial.tensor_names(collection="weights")
+        steps = self.base_trial.steps(mode=smd.modes.TRAIN)
+        print("steps: ", steps)
+        layer_names = self.base_trial.tensor_names(collection="weights", mode=smd.modes.TRAIN)
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
             results[lname] = list()
@@ -138,6 +139,6 @@ class Rule_Tensor():
                     results[step_var[0]].append("Tensors changed properly")
             last_step = step
 
-        self.make_chart(steps, results, path)
+        self.make_result_chart(steps, results, path)
 
 

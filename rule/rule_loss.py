@@ -42,14 +42,14 @@ class Rule_Loss():
                 loss = losses[step_index]
                 start = steps[step_index]
                 print(pre_loss, loss)
-                if not compare(pre_loss, loss, different_percent, increase_threshold_percent):
+                if not compare1(pre_loss, loss, different_percent, increase_threshold_percent):
                     count += 1
                 else:
                     count = 0
                 if count >= patience:
                     dict = {'steps': steps[:step_index+1], 'losses': losses[:step_index+1]}
                     df = pd.DataFrame(dict)
-                    df.to_csv('../data3.csv', index=False)
+                    df.to_csv('./data3.csv', index=False)
                     plot_loss(steps[:step_index+1],losses[:step_index+1])
                     return False
                 pre_loss = loss
@@ -59,12 +59,12 @@ class Rule_Loss():
         # output
         dict = {'steps': steps, 'losses': losses}
         df = pd.DataFrame(dict)
-        df.to_csv('../data3.csv', index=False)
+        df.to_csv('./data3.csv', index=False)
         plot_loss(steps, losses)
         return True
 
     def Overfitting(self, start_step=0, patience=1, ratio_threshold=0.1):
-        loss_name_test = self.base_trialtensor_names(collection='losses', mode=smd.modes.EVAL)
+        loss_name_test = self.base_trial.tensor_names(collection='losses', mode=smd.modes.EVAL)
         steps_test =self.base_trial.steps(mode=smd.modes.EVAL)
         loss_test = get_data(self.base_trial, loss_name_test[0], steps_test, smd.modes.EVAL)
 
@@ -80,7 +80,7 @@ class Rule_Loss():
         cnt = 0
         dict = {'steps': steps_test, 'test_losses': loss_test, 'train_losses':loss_train[start_step:start_step + n]}
         df = pd.DataFrame(dict)
-        df.to_csv('../data4.csv', index=False)
+        df.to_csv('./data4.csv', index=False)
         plot_loss2(loss_train[start_step:start_step + n + 1], loss_test, steps_train[start_step:start_step + n + 1],
                 steps_test)
         for i in range(n):
@@ -119,7 +119,7 @@ def get_data(trial, tname, steps_range, modes):
     return vals
 
 
-def compare(pre_loss, loss, different_percent, increase_threshold_percent):
+def compare1(pre_loss, loss, different_percent, increase_threshold_percent):
     if pre_loss > loss:
         diff = (pre_loss - loss) / pre_loss * 100
         print(diff)
@@ -145,7 +145,7 @@ def plot_loss2(x1, x2, y1, y2):
     # plt.savefig(file_name)
     plt.show()
 
-def compare(pre_loss, loss, different_percent):
+def compare2(pre_loss, loss, different_percent):
     diff = abs(pre_loss - loss) / pre_loss * 100
     print(diff)
     return True if diff >= different_percent else False
@@ -156,7 +156,7 @@ def loss_base_test(loss, steps, different, threshold, min_step):
     pre_loss = loss[0]
     cnt = 0
     for i in range(1, len(steps)):
-        if not compare(pre_loss, loss[i], different):
+        if not compare2(pre_loss, loss[i], different):
             cnt += 1
         else:
             cnt = 0

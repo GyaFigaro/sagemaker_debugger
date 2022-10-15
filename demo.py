@@ -12,6 +12,7 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 
 # First Party
+import time
 import numpy as np
 import smdebug.pytorch as smd
 from smdebug.pytorch import Hook, SaveConfig
@@ -51,6 +52,7 @@ def train(args, model, device, train_loader, optimizer, epoch, criterion):
     model.train()
     count = 0
     correct = 0
+    time_start = time.perf_counter()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -64,12 +66,11 @@ def train(args, model, device, train_loader, optimizer, epoch, criterion):
         # 实时显示准确率
         if batch_idx % args.log_interval == 0:
             print(
-                "Train Batch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    batch_idx,
-                    batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100.0 * batch_idx / len(train_loader),
-                    loss.item(),
+                '[epoch %d] train_loss: %.4f  test_accuracy: %.4f  train_time: %f s\n' % (
+                    epoch + 1, 
+                    loss.item(), 
+                    correct, 
+                    (time.perf_counter() - time_start)
                 )
             )
     

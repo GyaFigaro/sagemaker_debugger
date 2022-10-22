@@ -46,9 +46,9 @@ while True:
             if epoch != last_epoch:
                 print(load_f)
                 if load_result(load_epo):
-                    st.success("第{}轮:   训练正常")
+                    st.success("第{}轮:   训练正常", epoch)
                 else:
-                    st.error("第{}轮:   训练出现异常")
+                    st.error("第{}轮:   训练出现异常", epoch)
                     # should_tell_me_more = st.button('Tell me more')
                     # if should_tell_me_more:
                     #     tell_me_more()

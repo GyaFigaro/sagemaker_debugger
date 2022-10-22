@@ -13,14 +13,17 @@ from torchvision import datasets, transforms
 
 # First Party
 import time
+from tqdm import tqdm
 import numpy as np
 import smdebug.pytorch as smd
 from smdebug.pytorch import Hook, SaveConfig
 
-from rule.rule_run import debug
+from rule.rule_run import dataset_debug, epoch_debug, classfier_debug
 
 Losses1 = []
 Losses2 = []
+predictions = []
+labels = []
 
 class Net(nn.Module):
     def __init__(self):
@@ -52,8 +55,7 @@ def train(args, model, device, train_loader, optimizer, epoch, criterion):
     model.train()
     count = 0
     correct = 0
-    time_start = time.perf_counter()
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target) in tqdm(enumerate(train_loader), total=len(train_loader), leave = True):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(Variable(data, requires_grad=True))
@@ -63,16 +65,16 @@ def train(args, model, device, train_loader, optimizer, epoch, criterion):
         optimizer.step()
         pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
         correct += pred.eq(target.view_as(pred)).sum().item()
-        # 实时显示准确率
-        if batch_idx % args.log_interval == 0:
-            print(
-                '[epoch %d] train_loss: %.4f  test_accuracy: %.4f  train_time: %f s\n' % (
-                    epoch + 1, 
-                    loss.item(), 
-                    correct, 
-                    (time.perf_counter() - time_start)
-                )
-            )
+        # # 实时显示准确率
+        # if batch_idx % args.log_interval == 0:
+        #     print(
+        #         '[epoch %d] train_loss: %.4f  test_accuracy: %.4f  train_time: %f s\n' % (
+        #             epoch + 1, 
+        #             loss.item(), 
+        #             correct, 
+        #             (time.perf_counter() - time_start)
+        #         )
+        #     )
     
     return 100.0 * correct / len(train_loader.dataset)
 
@@ -87,6 +89,8 @@ def test(args, model, device, test_loader, criterion):
             test_loss += criterion(output, target).item()  # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
+            predictions.append(pred)
+            labels.append(target)
             Losses2.append(criterion(output, target).item())
 
     test_loss /= len(test_loader.dataset)
@@ -161,7 +165,7 @@ def main():
     parser.add_argument(
         "--log-interval",
         type=int,
-        default=10,
+        default=100,
         metavar="N",
         help="how many batches to wait before logging training status",
     )
@@ -208,6 +212,11 @@ def main():
         shuffle=True,
     )
 
+    # print("Input_Balance Result:", end=" ")
+    # print(dataset_debug('balance', train_loader))
+    # print("Not_Normalized_Data Result:", end=" ")
+    # print(dataset_debug('normalize', train_loader))
+
     model = Net().to(device)
 
     if args.rule_type == "vanishing_grad":
@@ -228,15 +237,17 @@ def main():
     accuracy = []
 
     for epoch in range(3):
-        print("THIS IS EPOCH:  ", epoch)
         hook.set_mode(smd.modes.TRAIN)
+        print("THIS IS EPOCH:  ", epoch)
         accuracy.append(train(args, model, device, train_loader, optimizer, epoch, criterion))
         hook.set_mode(smd.modes.EVAL)
         accuracy.append(test(args, model, device, test_loader, criterion))
-        debug(epoch)
+        epoch_debug(epoch, 938)
 
-    filename = 'accuracy'
-    np.save(filename,accuracy)    
+    # filename = 'accuracy'
+    # np.save(filename,accuracy)    
+    # print("Classifier_Confusion Result:", end=" ")
+    # print(classfier_debug(10, labels, predictions))
         
 
 if __name__ == "__main__":

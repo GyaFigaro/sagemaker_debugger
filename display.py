@@ -1,40 +1,65 @@
+import time
 from unittest import result
 import streamlit as st
 import pandas as pd
 import altair as alt
+import numpy as np
 import os
 from urllib.error import URLError
 import json
 
-@st.cache
-def show_epoch(epoch):
-    st.write("epoch: ", epoch)
+@st.cache(suppress_st_warning=True, show_spinner=True)
+def analysis_show(df):
+    flag = 0
 
-@st.cache
-def analysis_show(df, epoch):
-    epoch_result = {"result":'True', 'step':0}
-    show_epoch(epoch)
-    st.write(df)
+
+@st.cache(suppress_st_warning=True, show_spinner=True)
+def epoch_show(epoch):
+    epoch_str = 'epoch: ' + str(epoch)
+    st.markdown(epoch_str)
+
+def load_result(epoch_info):
+    for key in epoch_info:
+        if key != 'epoch_num':
+            if epoch_info[key] == True:
+                return False
+            elif epoch_info[key] == 1 or epoch_info[key] == 2:
+                return False
+    return True
 
 st.set_page_config(page_title="ML Debug Demo", page_icon="📊")
 
-st.markdown("# ML Debug Demo")
+st.markdown("# 调试结果")
 
 # st.sidebar.success("Select a type of rule above.")
 
-with open("./debug_info/epoch_info.json",'r') as load_f:
-    load_epo = json.load(load_f)
-    epoch = load_epo['epoch_num']
+last_epoch = -1
 
-    st.markdown("# Tensor Rules")
-
-    st.markdown("## Rule: All Values Zero")
-
-    df1 = pd.read_csv('./debug_info/tensor/AllZeroValues/result.csv')
-    
-    analysis_show(df1, epoch)
-    
-
+while True:
+    if os.path.exists("./debug_info/epoch_info.json") is False:
+        with st.spinner("Loading..."):
+            time.sleep(1)
+    else:
+        with open("./debug_info/epoch_info.json",'r') as load_f:
+            load_epo = json.load(load_f)
+            epoch = load_epo['epoch_num']
+            if epoch != last_epoch:
+                print(load_f)
+                if load_result(load_epo):
+                    st.success("第{}轮:   训练正常")
+                else:
+                    st.error("第{}轮:   训练出现异常")
+                    # should_tell_me_more = st.button('Tell me more')
+                    # if should_tell_me_more:
+                    #     tell_me_more()
+                    #     st.markdown('---')
+                    # else:
+                    #     st.markdown('---')
+                    #     interactive_galaxies(df)
+                last_epoch = epoch
+            else:
+                with st.spinner("Loading..."):
+                    time.sleep(1)
     # df1 = pd.read_csv('./debug_info/tensor/data.csv')
 
     # progress_bar = st.sidebar.progress(0)
@@ -42,54 +67,42 @@ with open("./debug_info/epoch_info.json",'r') as load_f:
     # last_rows = np.random.randn(1, 1)
     # chart = st.line_chart(last_rows)
 
-    # for i in range(1, 101):
-    #     new_rows = last_rows[-1, :] + np.random.randn(5, 1).cumsum(axis=0)
-    #     status_text.text("%i%% Complete" % i)
-    #     chart.add_rows(new_rows)
-    #     progress_bar.progress(i)
-    #     last_rows = new_rows
-    #     time.sleep(0.05)
+    # # for i in range(1, 101):
+    # #     new_rows = last_rows[-1, :] + np.random.randn(5, 1).cumsum(axis=0)
+    # #     status_text.text("%i%% Complete" % i)
+    # #     chart.add_rows(new_rows)
+    # #     progress_bar.progress(i)
+    # #     last_rows = new_rows
+    # #     time.sleep(0.05)
 
+    # st.markdown("## Rule2: Tensor Not Changed")
 
+    # df3 = pd.read_csv('./debug_info/tensor/ValuesUnchanged/result.csv')
 
-    st.markdown("## Rule: Tensor Not Changed")
+    # analysis_show(df3, epoch)
 
-    df3 = pd.read_csv('./debug_info/tensor/ValuesUnchanged/result.csv')
+    # st.markdown("# Tensor Rules")
 
-    analysis_show(df3, epoch)
+    # st.write(
+    #     """This demo illustrates a combination of plotting and animation with
+    # Streamlit. We're generating a bunch of random numbers in a loop for around
+    # 5 seconds. Enjoy!"""
+    # )
 
-    st.markdown("# Tensor Rules")
+    # st.markdown("## Rule3: Dying Relu")
 
-    st.write(
-        """This demo illustrates a combination of plotting and animation with
-    Streamlit. We're generating a bunch of random numbers in a loop for around
-    5 seconds. Enjoy!"""
-    )
+    # df4 = pd.read_csv('./debug_info/activationfunction/Dyingrelu/result.csv')
 
-    st.markdown("## Rule: Dying Relu")
+    # analysis_show(df4, epoch)
 
-    df4 = pd.read_csv('./debug_info/activationfunction/Dyingrelu/result.csv')
+    # st.markdown("## Rule4: Sigmoid Saturation")
 
-    analysis_show(df4, epoch)
+    # df5 = pd.read_csv('./debug_info/activationfunction/Sigmoidsaturation/result.csv')
 
-    st.markdown("## Rule: Sigmoid Saturation")
+    # analysis_show(df5, epoch)
 
-    df5 = pd.read_csv('./debug_info/activationfunction/Sigmoidsaturation/result.csv')
+    # st.markdown("## Rule5: Tanh Saturation")
 
-    analysis_show(df5, epoch)
+    # df6 = pd.read_csv('./debug_info/activationfunction/Tanhsaturation/result.csv')
 
-    st.markdown("## Rule: Tanh Saturation")
-
-    df6 = pd.read_csv('./debug_info/activationfunction/Tanhsaturation/result.csv')
-
-    analysis_show(df6, epoch)
-
-    # def load_data(nrows):
-    #     data = pd.read_csv('./pages/data.csv')
-    #     return data
-
-
-    # data = load_data(3)
-
-
-    # st.bar_chart(data, x='labels', y='count')
+    # analysis_show(df6, epoch)

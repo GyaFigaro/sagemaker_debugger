@@ -4,11 +4,13 @@ import matplotlib.pyplot as plt
 import os
 import rule.utils
 import smdebug as smd
+import json
 
 class Rule_Loss():
     def __init__(self, base_trial):
         super().__init__()
         self.base_trial = base_trial
+        self.epoch_info = load_epochfile()
 
     # different_percent: float 0.0~100 percents
     # increase_threhold_percent: float 0~100 percents
@@ -50,7 +52,9 @@ class Rule_Loss():
                     dict = {'steps': steps[:step_index+1], 'losses': losses[:step_index+1]}
                     df = pd.DataFrame(dict)
                     df.to_csv('./data3.csv', index=False)
-                    plot_loss(steps[:step_index+1],losses[:step_index+1])
+                    # plot_loss(steps[:step_index+1],losses[:step_index+1])
+                    self.epoch_info['loss_not_decrease'] = True
+                    update_epochfile(self.epoch_info)
                     return False
                 pre_loss = loss
                 start += num_steps
@@ -60,7 +64,7 @@ class Rule_Loss():
         dict = {'steps': steps, 'losses': losses}
         df = pd.DataFrame(dict)
         df.to_csv('./data3.csv', index=False)
-        plot_loss(steps, losses)
+        # plot_loss(steps, losses)
         return True
 
     def Overfitting(self, start_step=0, patience=1, ratio_threshold=0.1):
@@ -74,30 +78,46 @@ class Rule_Loss():
 
         n = len(steps_test)
         m = len(steps_train)
-        if start_step+n>m:
+        if start_step + n > m:
             print("start_step is out of range!")
             return False
         cnt = 0
         dict = {'steps': steps_test, 'test_losses': loss_test, 'train_losses':loss_train[start_step:start_step + n]}
         df = pd.DataFrame(dict)
         df.to_csv('./data4.csv', index=False)
-        plot_loss2(loss_train[start_step:start_step + n + 1], loss_test, steps_train[start_step:start_step + n + 1],
-                steps_test)
+        # plot_loss2(loss_train[start_step:start_step + n + 1], loss_test, steps_train[start_step:start_step + n + 1],
+                # steps_test)
         for i in range(n):
             ratio = abs(loss_train[i + start_step] - loss_test[i]) / loss_test[i]
             if ratio > ratio_threshold:
                 cnt += 1
             if cnt > patience:
+                self.epoch_info['fitting'] = 1
+                update_epochfile(self.epoch_info)
                 return False
         return True
 
     def Underfitting(self, method_choose, accuracy_path, accuracy_threshold, loss_threshold=0.1, min_steps=10,
                     different=0.01):
         if method_choose:
-            return accuracy_test(accuracy_path, accuracy_threshold)
+            return accuracy_test(accuracy_path, accuracy_threshold, self.epoch_info)
         else:
-            return loss_test(self.base_trial, loss_threshold, min_steps, different)
+            return loss_test(self.base_trial, loss_threshold, min_steps, different, self.epoch_info)
 
+    def Classifier_Confusion(self, category_no, labels, predictions, min_diag=0.9, max_off_diag=0.1):
+        cnt = count(labels, predictions, category_no)
+        #print(cnt)
+        result = calculate(cnt,category_no)
+        df = pd.DataFrame(result)
+        df.to_csv('./data5.csv', index=category_no, header=category_no)  # path需要修改
+        #draw_table(result, category_no)
+        for i in range(category_no):
+            if result[i][i] < min_diag:
+                return False
+            for j in range(category_no):
+                if result[j][i] > max_off_diag:
+                    return False
+        return True
 
 
 def plot_loss(x, y):
@@ -165,17 +185,19 @@ def loss_base_test(loss, steps, different, threshold, min_step):
         pre_loss = loss[i]
     return True
 
-def accuracy_test(accuracy_path, accuracy_threshold):
+def accuracy_test(accuracy_path, accuracy_threshold, epoch_info):
     accuracy = np.load(accuracy_path)
     train_accuracy = accuracy[0]
     test_accuracy = accuracy[1]
     if train_accuracy < accuracy_threshold or test_accuracy < accuracy_threshold:
+        epoch_info['fitting'] = 2
+        update_epochfile(epoch_info)
         return False
     else:
         return True
 
 
-def loss_test(trial, loss_threshold, min_steps, different_percent):
+def loss_test(trial, loss_threshold, min_steps, different_percent, epoch_info):
     loss_name_test = trial.tensor_names(collection='losses', mode=smd.modes.EVAL)
     steps_test = trial.steps(mode=smd.modes.EVAL)
     loss_test = get_data(trial, loss_name_test[0], steps_test, smd.modes.EVAL)
@@ -184,9 +206,58 @@ def loss_test(trial, loss_threshold, min_steps, different_percent):
     steps_train = trial.steps(mode=smd.modes.TRAIN)
     loss_train = get_data(trial, loss_name_train[0], steps_train, smd.modes.TRAIN)
 
+    dict1 = {'steps_test': steps_test, 'loss_test': loss_test}
+    df = pd.DataFrame(dict1)
+    df.to_csv('./data61.csv', index=False)
+
+    dict2 = {'steps_train': steps_train, 'loss_train': loss_train}
+    df = pd.DataFrame(dict2)
+    df.to_csv('./data62.csv', index=False)
+
     if loss_base_test(loss_train, steps_train, different_percent, loss_threshold, min_steps) and loss_base_test(
             loss_test, steps_test, different_percent, loss_threshold, min_steps):
+        epoch_info['fitting'] = 2
+        update_epochfile(epoch_info)
         return True
     else:
         return False
 
+# 统计
+def count(labels, predictions, category):
+    cnt = [[0 for i in range(category)] for i in range(category)]
+    m = len(labels)
+    for i in range(m):
+        size = list(labels[i].size())
+        for j in range(size[0]):
+            x, y = labels[i][j].item(), predictions[i][j].item()
+            cnt[x][y] += 1
+    return cnt
+
+
+# 计算
+def calculate(count, category):
+    result = [[0 for i in range(category)] for i in range(category)]
+    sum_diag = 0
+    sum_non_diag = [0 for i in range(category)]
+    for i in range(category):
+        sum_diag += count[i][i]
+        for j in range(category):
+            sum_non_diag[i] += count[j][i]
+    for i in range(category):
+        for j in range(category):
+            if j == i:
+                result[i][j] = round(count[i][j]/sum_diag,4)
+            else:
+                result[j][i] = round(count[j][i]/sum_non_diag[i],4)
+
+    return result
+
+def load_epochfile():
+    with open("./debug_info/epoch_info.json",'r') as load_f:
+        epoch_info = json.load(load_f)
+    return epoch_info
+
+def update_epochfile(epoch_info):
+    with open("./debug_info/epoch_info.json","w") as f:
+        json.dump(epoch_info, f)
+        

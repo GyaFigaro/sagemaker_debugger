@@ -28,7 +28,7 @@ def get_data(trial, tname, steps_range, modes):
     return vals
 
 
-def compare1(pre_loss, loss, different_percent, increase_threshold_percent):
+def compare(pre_loss, loss, different_percent, increase_threshold_percent):
     if pre_loss > loss:
         diff = (pre_loss - loss) / pre_loss * 100
         print(diff)
@@ -72,7 +72,7 @@ def Loss_Not_Decreasing(trial_path, tensor_regex=None, use_losses_collection=Tru
             loss = losses[step_index]
             start = steps[step_index]
             print(pre_loss, loss)
-            if not compare1(pre_loss, loss, different_percent, increase_threshold_percent):
+            if not compare(pre_loss, loss, different_percent, increase_threshold_percent):
                 count += 1
             else:
                 count = 0

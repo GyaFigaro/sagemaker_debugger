@@ -5,20 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def draw_point(labels, quants):
-    zeros = [0] * len(labels)
-    plt.figure(figsize=(200, 100), dpi=100)
-    plt.plot(labels, quants, c='red', label="均值")
-    plt.plot(labels, zeros, c='green', linestyle='--', label="0")
-    plt.scatter(labels, quants, c='red')
-    plt.yticks([i * 0.01 for i in range(-5, 5)])
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.xlabel("epoch", fontdict={'size': 16})
-    plt.ylabel("Average", fontdict={'size': 16})
-    plt.title("Average of samples", fontdict={'size': 20})
-    plt.show()
-
-
 def Not_Normalized_Data(train_loader, threshold_mean=0.2, threshold_samples=500, channel=1):
     means = []
     mean = 0
@@ -27,7 +13,7 @@ def Not_Normalized_Data(train_loader, threshold_mean=0.2, threshold_samples=500,
     for batch_idx, data in enumerate(train_loader):
         train_features, train_labels = data
         mean += torch.mean(train_features).item()
-        print(mean / (batch_idx + 1))
+        # print(mean / (batch_idx + 1))
         size = list(train_labels.size())
         image_cnt += size[0]
         cnt += 1
@@ -36,8 +22,8 @@ def Not_Normalized_Data(train_loader, threshold_mean=0.2, threshold_samples=500,
             quants = [i for i in range(cnt)]
             dict = {'quants': quants, 'means': means}
             df = pd.DataFrame(dict)
-            df.to_csv('../data2.csv', index=False)
-            draw_point(quants, means)
+            df.to_csv('./data2.csv', index=False)  # path需要修改
+            # draw_point(quants, means)
             return False
     if image_cnt <= threshold_samples:
         print("The number of samples is not enough!")
@@ -46,8 +32,8 @@ def Not_Normalized_Data(train_loader, threshold_mean=0.2, threshold_samples=500,
     quants = [i for i in range(cnt)]
     dict = {'quants': quants, 'means': means}
     df = pd.DataFrame(dict)
-    df.to_csv('../data2.csv', index=False)
-    draw_point(quants, means)
+    df.to_csv('./data2.csv', index=False)  # path需要修改
+    # draw_point(quants, means)
     return True
 
 
@@ -65,4 +51,4 @@ if __name__ == "__main__":
         shuffle=True,  # 打乱数据
     )
     print(Not_Normalized_Data(train_loader))
-    print(Not_Normalized_Data(train_loader,0.001))
+    print(Not_Normalized_Data(train_loader, 0.001))

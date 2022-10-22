@@ -1,22 +1,24 @@
+from email.mime import base
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import rule.utils
 import smdebug as smd
+import json
 
 class Rule_Tensor():
-    def __init__(self, base_trial, 
+    def __init__(self, base_trial, steps,
                  rtol=1e-05, atol=1e-08, 
-                 threshold_layer=0.4, 
-                 show_steps=5):
+                 threshold_layer=0.4):
         super().__init__()
         self.base_trial = base_trial
         self.rtol = float(rtol)
         self.atol = float(atol)
         self.threshold_layer = float(threshold_layer)
-        self.show_steps = show_steps
+        self.steps = steps
         self.path = './debug_info/tensor'
+        self.epoch_info = load_epochfile()
 
     # 制作数据表格
     def make_data_chart(self, step, dicts, rule_path):
@@ -34,11 +36,12 @@ class Rule_Tensor():
     # 制作结果表格
     def make_result_chart(self, steps, dicts, rule_path):
         chart_path = rule_path + '/result.csv'
-        df = pd.DataFrame({'step':steps})
+        dict_0 = {'step': steps}
         cnt = 1
         for key in dicts:
-            df.insert(cnt, key, dicts[key])
+            dict_0[key] = dicts[key]
             cnt += 1
+        df = pd.DataFrame(dict_0)
         df.to_csv(chart_path, header=True, sep=' ', index=False)
     
     # 计算张量中0值的百分比
@@ -83,26 +86,25 @@ class Rule_Tensor():
         path = self.path + '/AllZeroValues'
         if not os.path.exists(path):
             os.makedirs(path)
-
-        steps = self.base_trial.steps(mode=smd.modes.TRAIN)
-        print("steps: ", steps)
+        # print("steps: ", self.steps)
         layer_names = self.base_trial.tensor_names(regex="output", mode=smd.modes.TRAIN)
         percents = {'layers':[], 'percents':[]}
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
             results[lname] = list()
           
-        for step in steps:
+        for step in self.steps:
             percents['layers'].clear()
             percents['percents'].clear()
-            print("step ", step, ":")
             step_zeros = self.invoke_at_step(cur_step=step, 
                                              layer_names=layer_names, rule_id=12) 
             for step_zero in step_zeros:
                 percents['layers'].append(step_zero[0])
                 percents['percents'].append(step_zero[1])
-                if step_zero[2] == True and step != steps[0]:
+                if step_zero[2] == True and step != self.steps[0]:
                     # print(step_zero[0], ": All values zero")
+                    self.epoch_info['all_values_zero'] = True
+                    update_epochfile(self.epoch_info)
                     results[step_zero[0]].append("All values zero")
                 else:
                     # print(step_zero[0], ": Not all values zero")
@@ -110,7 +112,7 @@ class Rule_Tensor():
             
             self.make_data_chart(step, percents, path)
 
-        self.make_result_chart(steps, results, path)
+        self.make_result_chart(self.steps, results, path)
 
     # VU接口
     def values_unchanged(self):
@@ -118,27 +120,35 @@ class Rule_Tensor():
         if not os.path.exists(path):
             os.makedirs(path)
 
-        steps = self.base_trial.steps(mode=smd.modes.TRAIN)
-        print("steps: ", steps)
+        print("steps: ", self.steps)
         layer_names = self.base_trial.tensor_names(collection="weights", mode=smd.modes.TRAIN)
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
             results[lname] = list()
 
-        last_step = steps[0]
-        for step in steps: 
-            print("step ", step, ":")
+        last_step = self.steps[0]
+        for step in self.steps: 
             step_tensors = self.invoke_at_step(last_step=last_step, cur_step=step, 
                                               layer_names = layer_names, rule_id=13) 
             for step_var in step_tensors:
-                if step_var[1] == True and step != steps[0]:
+                if step_var[1] == True and step != self.steps[0]:
                     # print(step_var[0], ": Tensors were unchanged")
+                    self.epoch_info['tensors_unchanged'] = True
+                    update_epochfile(self.epoch_info)
                     results[step_var[0]].append("Tensors were unchanged")
                 else :
                     # print(step_var[0], ": Tensors changed properly")
                     results[step_var[0]].append("Tensors changed properly")
             last_step = step
 
-        self.make_result_chart(steps, results, path)
+        self.make_result_chart(self.steps, results, path)
 
 
+def load_epochfile():
+    with open("./debug_info/epoch_info.json",'r') as load_f:
+        epoch_info = json.load(load_f)
+    return epoch_info
+
+def update_epochfile(epoch_info):
+    with open("./debug_info/epoch_info.json","w") as f:
+        json.dump(epoch_info, f)

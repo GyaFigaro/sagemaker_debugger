@@ -5,28 +5,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def draw_bar(labels, quants):
-    width = 0.4
-    ind = np.linspace(0.5, 9.5, 10)
-    # make a square figure
-    fig = plt.figure(1)
-    ax = fig.add_subplot(111)
-    # Bar Plot
-    ax.bar(ind - width / 2, quants, width, color='green')
-    # Set the ticks on x-axis
-    ax.set_xticks(ind)
-    ax.set_xticklabels(labels)
-    # labels
-    ax.set_xlabel('Class')
-    ax.set_ylabel('Amount')
-    # title
-    ax.set_title('The Number of Every Class', bbox={'facecolor': '0.8', 'pad': 5})
-    plt.grid(True)
-    plt.show()
-    plt.savefig("input_class.jpg")
-    plt.close()
-
-
 def data_process(train_loader):
     labels = []
     count = []
@@ -50,9 +28,9 @@ def input_balance(train_loader, threshold_imbalance=10):
     rate = max_class_num / min_class_num
     dict = {'labels': labels, 'count': count}
     df = pd.DataFrame(dict)
-    df.to_csv('../data.csv', index=False)
+    df.to_csv('./data.csv', index=False)  # path需要修改
     if rate >= threshold_imbalance:
-        draw_bar(labels, count)
+        #draw_bar(labels, count)
         return False
     else:
         return True

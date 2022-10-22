@@ -7,6 +7,6 @@ fc1_output_0 0.0
 fc2_output_0 0.0
 max_pool2_output_0 0.0
 max_pool_output_0 0.0
-relu_output_0 0.4173125
+relu_output_0 0.4125
 sigmoid_output_0 0.0
 tanh_output_0 0.0

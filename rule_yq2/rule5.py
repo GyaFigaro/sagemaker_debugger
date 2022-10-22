@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 from torchvision import datasets, transforms
 import numpy as np
@@ -85,9 +86,11 @@ def calculate(count, category):
 
 def Classifier_Confusion(category_no, labels, predictions, min_diag=0.9, max_off_diag=0.1):
     cnt = count(labels,predictions,category_no)
-    print(cnt)
+    #print(cnt)
     result = calculate(cnt,category_no)
-    draw_table(result, category_no)
+    df = pd.DataFrame(result)
+    df.to_csv('./data5.csv', index=category_no, header=category_no)  # path需要修改
+    #draw_table(result, category_no)
     for i in range(category_no):
         if result[i][i] < min_diag:
             return False
@@ -126,7 +129,7 @@ if __name__ == "__main__":
     model = model.to(device)
     test_loader = torch.utils.data.DataLoader(
         datasets.MNIST(
-            "./data",
+            "../data",
             train=False,
             transform=transforms.Compose(
                 [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]

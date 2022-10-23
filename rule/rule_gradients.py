@@ -40,11 +40,11 @@ class Rule_Gradients():
         bool_exploding = False
         for i in list_gradients:
             if i < self.vanishing_threshold:
-                self.epoch_info['gradients'] = 1
+                self.epoch_info['vanishing_gradient'] = True
                 update_epochfile(self.epoch_info)
                 bool_vanishing = True
             if i > self.exploding_threshold:
-                self.epoch_info['gradients'] = 2
+                self.epoch_info['exploding_gradient'] = True
                 update_epochfile(self.epoch_info)
                 bool_exploding = True
         array_result = np.array(['vanishing',bool_vanishing,'exploding',bool_exploding])

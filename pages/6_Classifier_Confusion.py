@@ -14,13 +14,13 @@ st.write(
 DATE_COLUMN = 'date/time'
 
 def load_data(nrows):
-    data = pd.read_csv('data5.csv')
+    data = pd.read_csv('./debug_info/data5.csv')
     return data
 
 data = load_data(3)
 st.dataframe(data)
 
-expander = st.expander("See explanation")
+expander = st.expander("./debug_info/See explanation")
 expander.write("""
     The chart above shows some numbers I picked for you.
     I rolled actual dice for these, so they're *guaranteed* to

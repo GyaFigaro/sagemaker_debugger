@@ -14,14 +14,14 @@ st.write(
 DATE_COLUMN = 'date/time'
 
 def load_data(nrows):
-    data = pd.read_csv('data3.csv')
+    data = pd.read_csv('./debug_info/data3.csv')
     return data
 
-data1 = pd.read_csv('data62.csv')
+data1 = pd.read_csv('./debug_info/data62.csv')
 
 st.line_chart(data1,x="steps_train",y="loss_train")
 
-data2 = pd.read_csv('data61.csv')
+data2 = pd.read_csv('./debug_info/data61.csv')
 
 st.line_chart(data2,x="steps_test",y="loss_test")
 

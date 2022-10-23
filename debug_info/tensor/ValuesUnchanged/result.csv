@@ -1,11 +1,11 @@
-step Net_conv1.weight Net_conv2.weight Net_fc1.weight Net_fc2.weight
-1900 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2000 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2100 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2200 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2300 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2400 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2500 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2600 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2700 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
-2800 "Tensors changed properly" "Tensors changed properly" "Tensors changed properly" "Tensors changed properly"
+step,Net_conv1.weight,Net_conv2.weight,Net_fc1.weight,Net_fc2.weight
+0,0,0,0,0
+100,0,0,0,0
+200,0,0,0,0
+300,0,0,0,0
+400,0,0,0,0
+500,0,0,0,0
+600,0,0,0,0
+700,0,0,0,0
+800,0,0,0,0
+900,0,0,0,0

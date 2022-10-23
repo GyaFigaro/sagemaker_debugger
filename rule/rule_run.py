@@ -32,12 +32,15 @@ def epoch_debug(epoch, batch_num):
     
     if not os.path.exists("./debug_info"):
         os.makedirs("./debug_info")
+
     epo_info = {'epoch_num': epoch - 1,
-                'fitting': 0,
+                'overfitting': False,
+                'underfitting': False,
                 'loss_not_decrease': False,
                 'poor_initialization': False,
                 'update_small': False,
-                'gradients': 0,
+                'vanishing_gradient': False,
+                'exploding_gradient': False,
                 'all_values_zero': False,
                 'tensors_unchanged': False,
                 'dead_relu': False,
@@ -77,11 +80,15 @@ def epoch_debug(epoch, batch_num):
         print("epoch info loads successfully")
 
 def classfier_debug(category_no, labels, predictions):
+    if not os.path.exists("./debug_info"):
+        os.makedirs("./debug_info")
     trial = smd.create_trial(path="./tmp/testing/demo")
     rule_loss = Rule_Loss(base_trial=trial)
     return rule_loss.Classifier_Confusion(category_no, labels, predictions)
 
 def dataset_debug(mode, train_loader):
+    if not os.path.exists("./debug_info"):
+        os.makedirs("./debug_info")
     if mode == 'balance':
         return rule_dataset.input_balance(train_loader)
     if mode == 'normalize':

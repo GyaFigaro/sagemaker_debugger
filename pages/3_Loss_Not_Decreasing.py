@@ -14,7 +14,7 @@ st.write(
 DATE_COLUMN = 'date/time'
 
 def load_data(nrows):
-    data = pd.read_csv('data3.csv')
+    data = pd.read_csv('./debug_info/data3.csv')
     return data
 
 data = load_data(3)

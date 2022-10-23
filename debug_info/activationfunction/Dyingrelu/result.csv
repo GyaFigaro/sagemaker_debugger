@@ -1,11 +1,11 @@
-step relu_output_0
-1900 "Normal relu"
-2000 "Normal relu"
-2100 "Normal relu"
-2200 "Normal relu"
-2300 "Normal relu"
-2400 "Normal relu"
-2500 "Normal relu"
-2600 "Normal relu"
-2700 "Normal relu"
-2800 "Normal relu"
+step,relu_output_0
+0,0
+100,0
+200,0
+300,0
+400,0
+500,0
+600,0
+700,0
+800,0
+900,0

@@ -36,7 +36,7 @@ class Rule_ActivationFunctions():
     def make_data_chart(self, step, dicts, rule_path):
         chart_path = rule_path + '/' + str(step) + '.csv'
         df = pd.DataFrame.from_dict(data=dicts, orient='columns')
-        df.to_csv(chart_path, header=True, sep=' ', index=False)
+        df.to_csv(chart_path, index=False)
         # plot_path = rule_path + '/' + str(step) + '.png'
         # print(plot_path)
         # x_label = list(dicts.keys())
@@ -48,12 +48,9 @@ class Rule_ActivationFunctions():
 
     def make_result_chart(self, steps, dicts, rule_path):
         chart_path = rule_path + '/result.csv'
-        df = pd.DataFrame({'step':steps})
-        cnt = 1
-        for key in dicts:
-            df.insert(cnt, key, dicts[key])
-            cnt += 1
-        df.to_csv(chart_path, header=True, sep=' ', index=False)
+        df = pd.DataFrame(dicts)
+        df.insert(0, "step", steps)
+        df.to_csv(chart_path, index=False)
     
     def compute_dying_relus(self, last_tensor, cur_tensor):
         last_t = last_tensor.reshape(-1)
@@ -140,11 +137,11 @@ class Rule_ActivationFunctions():
                     # print(step_zero[0], ": Sigmoid saturation")
                     self.epoch_info['tanh/sigmoid_saturation'] = True
                     update_epochfile(self.epoch_info)
-                    results[step_sig[0]].append("Sigmoid saturation")
+                    results[step_sig[0]].append(1)
 
                 else:
                     # print(step_zero[0], ": Normal Sigmoid")
-                    results[step_sig[0]].append("Normal Sigmoid")
+                    results[step_sig[0]].append(0)
 
             self.make_data_chart(step, percents, path)
 
@@ -173,10 +170,10 @@ class Rule_ActivationFunctions():
                     # print(step_zero[0], ": Tanh saturation")
                     self.epoch_info['tanh/sigmoid_saturation'] = True
                     update_epochfile(self.epoch_info)
-                    results[step_tanh[0]].append("Tanh saturation")
+                    results[step_tanh[0]].append(1)
                 else:
                     # print(step_zero[0], ": Normal Tanh")
-                    results[step_tanh[0]].append("Normal Tanh")
+                    results[step_tanh[0]].append(0)
 
             self.make_data_chart(step, percents, path)
 
@@ -198,7 +195,6 @@ class Rule_ActivationFunctions():
         for step in self.steps: 
             percents['layers'].clear()
             percents['percents'].clear()
-            print("step ", step, "finished")
             step_tensors = self.invoke_at_step(last_step=last_step, cur_step=step, 
                                               layer_names = layer_names, rule_id=17) 
             for step_relu in step_tensors:
@@ -208,10 +204,10 @@ class Rule_ActivationFunctions():
                     # print(step_var[0], ": Dying relu")
                     self.epoch_info['dead_relu'] = True
                     update_epochfile(self.epoch_info)
-                    results[step_relu[0]].append("Dying relu")
+                    results[step_relu[0]].append(1)
                 else :
                     # print(step_var[0], ": Normal relu")
-                    results[step_relu[0]].append("Normal relu")
+                    results[step_relu[0]].append(0)
             last_step = step
  
             self.make_data_chart(step, percents, path)

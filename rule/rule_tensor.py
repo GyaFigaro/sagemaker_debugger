@@ -24,7 +24,7 @@ class Rule_Tensor():
     def make_data_chart(self, step, dicts, rule_path):
         chart_path = rule_path + '/' + str(step) + '.csv'
         df = pd.DataFrame.from_dict(data=dicts, orient='columns')
-        df.to_csv(chart_path, header=True, sep=' ', index=False)
+        df.to_csv(chart_path, index=False)
         # print(plot_path)
         # x_label = list(dicts.keys())
         # y_label = list(dicts.values())
@@ -36,13 +36,9 @@ class Rule_Tensor():
     # 制作结果表格
     def make_result_chart(self, steps, dicts, rule_path):
         chart_path = rule_path + '/result.csv'
-        dict_0 = {'step': steps}
-        cnt = 1
-        for key in dicts:
-            dict_0[key] = dicts[key]
-            cnt += 1
-        df = pd.DataFrame(dict_0)
-        df.to_csv(chart_path, header=True, sep=' ', index=False)
+        df = pd.DataFrame(dicts)
+        df.insert(0, "step", steps)
+        df.to_csv(chart_path, index=False)
     
     # 计算张量中0值的百分比
     def compute_zero_values(self, tensor):
@@ -61,7 +57,7 @@ class Rule_Tensor():
             for tname in layer_names:
                 tensor = self.base_trial.tensor(tname).value(step_num=cur_step, mode=smd.modes.TRAIN)
                 percent = self.compute_zero_values(tensor)
-                if percent >= self.threshold_layer:
+                if percent >= self.threshold_layer and tname.find("relu") == -1:
                     step_zeros.append([tname, percent, True])
                 else :
                     step_zeros.append([tname, percent, False])
@@ -92,7 +88,6 @@ class Rule_Tensor():
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
             results[lname] = list()
-          
         for step in self.steps:
             percents['layers'].clear()
             percents['percents'].clear()
@@ -105,10 +100,10 @@ class Rule_Tensor():
                     # print(step_zero[0], ": All values zero")
                     self.epoch_info['all_values_zero'] = True
                     update_epochfile(self.epoch_info)
-                    results[step_zero[0]].append("All values zero")
+                    results[step_zero[0]].append(1)
                 else:
                     # print(step_zero[0], ": Not all values zero")
-                    results[step_zero[0]].append("Not all values zero")
+                    results[step_zero[0]].append(0)
             
             self.make_data_chart(step, percents, path)
 
@@ -120,7 +115,6 @@ class Rule_Tensor():
         if not os.path.exists(path):
             os.makedirs(path)
 
-        print("steps: ", self.steps)
         layer_names = self.base_trial.tensor_names(collection="weights", mode=smd.modes.TRAIN)
         results = dict.fromkeys(layer_names)
         for lname in layer_names:
@@ -135,10 +129,10 @@ class Rule_Tensor():
                     # print(step_var[0], ": Tensors were unchanged")
                     self.epoch_info['tensors_unchanged'] = True
                     update_epochfile(self.epoch_info)
-                    results[step_var[0]].append("Tensors were unchanged")
+                    results[step_var[0]].append(1)
                 else :
                     # print(step_var[0], ": Tensors changed properly")
-                    results[step_var[0]].append("Tensors changed properly")
+                    results[step_var[0]].append(0)
             last_step = step
 
         self.make_result_chart(self.steps, results, path)

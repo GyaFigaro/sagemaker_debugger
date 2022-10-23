@@ -17,7 +17,7 @@ class Rule_Datasets():
         rate = max_class_num / min_class_num
         dict = {'labels': labels, 'count': count}
         df = pd.DataFrame(dict)
-        df.to_csv('./data.csv', index=False)  # path需要修改
+        df.to_csv('./debug_info/data.csv', index=False)  # path需要修改
         if rate >= threshold_imbalance:
             #draw_bar(labels, count)
             return False
@@ -41,7 +41,7 @@ class Rule_Datasets():
                 quants = [i for i in range(cnt)]
                 dict = {'quants': quants, 'means': means}
                 df = pd.DataFrame(dict)
-                df.to_csv('./data2.csv', index=False)  # path需要修改
+                df.to_csv('./debug_info/data2.csv', index=False)  # path需要修改
                 # draw_point(quants, means)
                 return False
         if image_cnt <= threshold_samples:
@@ -51,7 +51,7 @@ class Rule_Datasets():
         quants = [i for i in range(cnt)]
         dict = {'quants': quants, 'means': means}
         df = pd.DataFrame(dict)
-        df.to_csv('./data2.csv', index=False)  # path需要修改
+        df.to_csv('./debug_info/data2.csv', index=False)  # path需要修改
         # draw_point(quants, means)
         return True
 

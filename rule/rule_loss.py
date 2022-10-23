@@ -21,7 +21,6 @@ class Rule_Loss():
         # data process
         loss_name = self.base_trial.tensor_names(collection="losses", mode=smd.modes.TRAIN)
         steps = self.base_trial.steps(mode=smd.modes.TRAIN)
-        print(steps)
         if use_losses_collection == True and loss_name[0]:
             losses = get_data(self.base_trial, loss_name[0], steps, smd.modes.TRAIN)
         else:
@@ -43,7 +42,6 @@ class Rule_Loss():
             else:
                 loss = losses[step_index]
                 start = steps[step_index]
-                print(pre_loss, loss)
                 if not compare1(pre_loss, loss, different_percent, increase_threshold_percent):
                     count += 1
                 else:
@@ -63,7 +61,7 @@ class Rule_Loss():
         # output
         dict = {'steps': steps, 'losses': losses}
         df = pd.DataFrame(dict)
-        df.to_csv('./data3.csv', index=False)
+        df.to_csv('./debug_info/data3.csv', index=False)
         # plot_loss(steps, losses)
         return True
 
@@ -84,7 +82,7 @@ class Rule_Loss():
         cnt = 0
         dict = {'steps': steps_test, 'test_losses': loss_test, 'train_losses':loss_train[start_step:start_step + n]}
         df = pd.DataFrame(dict)
-        df.to_csv('./data4.csv', index=False)
+        df.to_csv('./debug_info/data4.csv', index=False)
         # plot_loss2(loss_train[start_step:start_step + n + 1], loss_test, steps_train[start_step:start_step + n + 1],
                 # steps_test)
         for i in range(n):
@@ -92,7 +90,7 @@ class Rule_Loss():
             if ratio > ratio_threshold:
                 cnt += 1
             if cnt > patience:
-                self.epoch_info['fitting'] = 1
+                self.epoch_info['overfitting'] = 1
                 update_epochfile(self.epoch_info)
                 return False
         return True
@@ -109,7 +107,7 @@ class Rule_Loss():
         #print(cnt)
         result = calculate(cnt,category_no)
         df = pd.DataFrame(result)
-        df.to_csv('./data5.csv', index=category_no, header=category_no)  # path需要修改
+        df.to_csv('./debug_info/data5.csv', index=category_no, header=category_no)  # path需要修改
         #draw_table(result, category_no)
         for i in range(category_no):
             if result[i][i] < min_diag:
@@ -142,11 +140,9 @@ def get_data(trial, tname, steps_range, modes):
 def compare1(pre_loss, loss, different_percent, increase_threshold_percent):
     if pre_loss > loss:
         diff = (pre_loss - loss) / pre_loss * 100
-        print(diff)
         return True if diff >= different_percent else False
     else:
         diff = (loss - pre_loss) / pre_loss * 100
-        print(diff)
         return True if diff <= increase_threshold_percent else False
 
 def plot_loss2(x1, x2, y1, y2):
@@ -167,7 +163,6 @@ def plot_loss2(x1, x2, y1, y2):
 
 def compare2(pre_loss, loss, different_percent):
     diff = abs(pre_loss - loss) / pre_loss * 100
-    print(diff)
     return True if diff >= different_percent else False
 
 def loss_base_test(loss, steps, different, threshold, min_step):
@@ -190,7 +185,7 @@ def accuracy_test(accuracy_path, accuracy_threshold, epoch_info):
     train_accuracy = accuracy[0]
     test_accuracy = accuracy[1]
     if train_accuracy < accuracy_threshold or test_accuracy < accuracy_threshold:
-        epoch_info['fitting'] = 2
+        epoch_info['underfitting'] = True
         update_epochfile(epoch_info)
         return False
     else:
@@ -208,15 +203,15 @@ def loss_test(trial, loss_threshold, min_steps, different_percent, epoch_info):
 
     dict1 = {'steps_test': steps_test, 'loss_test': loss_test}
     df = pd.DataFrame(dict1)
-    df.to_csv('./data61.csv', index=False)
+    df.to_csv('./debug_info/data61.csv', index=False)
 
     dict2 = {'steps_train': steps_train, 'loss_train': loss_train}
     df = pd.DataFrame(dict2)
-    df.to_csv('./data62.csv', index=False)
+    df.to_csv('./debug_info/data62.csv', index=False)
 
     if loss_base_test(loss_train, steps_train, different_percent, loss_threshold, min_steps) and loss_base_test(
             loss_test, steps_test, different_percent, loss_threshold, min_steps):
-        epoch_info['fitting'] = 2
+        epoch_info['underfitting'] = True
         update_epochfile(epoch_info)
         return True
     else:

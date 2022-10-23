@@ -212,10 +212,10 @@ def main():
         shuffle=True,
     )
 
-    # print("Input_Balance Result:", end=" ")
-    # print(dataset_debug('balance', train_loader))
-    # print("Not_Normalized_Data Result:", end=" ")
-    # print(dataset_debug('normalize', train_loader))
+    print("Input_Balance Result:", end=" ")
+    print(dataset_debug('balance', train_loader))
+    print("Not_Normalized_Data Result:", end=" ")
+    print(dataset_debug('normalize', train_loader))
 
     model = Net().to(device)
 
@@ -236,7 +236,7 @@ def main():
 
     accuracy = []
 
-    for epoch in range(3):
+    for epoch in range(1):
         hook.set_mode(smd.modes.TRAIN)
         print("THIS IS EPOCH:  ", epoch)
         accuracy.append(train(args, model, device, train_loader, optimizer, epoch, criterion))
@@ -244,10 +244,10 @@ def main():
         accuracy.append(test(args, model, device, test_loader, criterion))
         epoch_debug(epoch, 938)
 
-    # filename = 'accuracy'
-    # np.save(filename,accuracy)    
-    # print("Classifier_Confusion Result:", end=" ")
-    # print(classfier_debug(10, labels, predictions))
+    filename = 'accuracy'
+    np.save(filename,accuracy)    
+    print("Classifier_Confusion Result:", end=" ")
+    print(classfier_debug(10, labels, predictions))
         
 
 if __name__ == "__main__":

@@ -1,11 +1,11 @@
-step tanh_output_0
-1900 "Normal Tanh"
-2000 "Normal Tanh"
-2100 "Normal Tanh"
-2200 "Normal Tanh"
-2300 "Normal Tanh"
-2400 "Normal Tanh"
-2500 "Normal Tanh"
-2600 "Normal Tanh"
-2700 "Normal Tanh"
-2800 "Normal Tanh"
+step,tanh_output_0
+0,0
+100,0
+200,0
+300,0
+400,0
+500,0
+600,0
+700,0
+800,0
+900,0

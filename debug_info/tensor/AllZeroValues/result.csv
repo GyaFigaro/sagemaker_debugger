@@ -1,11 +1,11 @@
-step NLLLoss_output_0 Net_output_0 conv1_output_0 conv2_output_0 fc1_output_0 fc2_output_0 max_pool2_output_0 max_pool_output_0 relu_output_0 sigmoid_output_0 tanh_output_0
-1900 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero"
-2000 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2100 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2200 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2300 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2400 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2500 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2600 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2700 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
-2800 "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "Not all values zero" "All values zero" "Not all values zero" "Not all values zero"
+step,NLLLoss_output_0,Net_output_0,conv1_output_0,conv2_output_0,fc1_output_0,fc2_output_0,max_pool2_output_0,max_pool_output_0,relu_output_0,sigmoid_output_0,tanh_output_0
+0,0,0,0,0,0,0,0,0,0,0,0
+100,0,0,0,0,0,0,0,0,0,0,0
+200,0,0,0,0,0,0,0,0,0,0,0
+300,0,0,0,0,0,0,0,0,0,0,0
+400,0,0,0,0,0,0,0,0,0,0,0
+500,0,0,0,0,0,0,0,0,0,0,0
+600,0,0,0,0,0,0,0,0,0,0,0
+700,0,0,0,0,0,0,0,0,0,0,0
+800,0,0,0,0,0,0,0,0,0,0,0
+900,0,0,0,0,0,0,0,0,0,0,0

@@ -32,9 +32,9 @@ def load_result(epoch_info, show_step):
                 st.info('过拟合:   未检出')
         if key == 'underfitting':
             if epoch_info[key] == True:   # true 为检测到问题，false相反
-                st.info('过拟合:   已检测到该问题')
+                st.info('欠拟合:   已检测到该问题')
             else:
-                st.info('过拟合:   未检出')
+                st.info('欠拟合:   未检出')
         if key == 'all_values_zero':
             if epoch_info[key] == True:
                 st.info('张量值全零:   已检测到该问题')

@@ -5,7 +5,7 @@ from urllib.error import URLError
 
 st.set_page_config(page_title="Data Demo", page_icon="📊")
 
-st.markdown("# Classifier Confusion")
+st.markdown("# Rule: Classifier Confusion")
 f = open('./debug_info/result5.txt','r')
 result = f.read()
 f.close()

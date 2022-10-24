@@ -7,14 +7,6 @@ import json
 
 show_step = 5
 
-st.markdown("# Tensor规则")
-
-st.write(
-    """This demo illustrates a combination of plotting and animation with
-Streamlit. We're generating a bunch of random numbers in a loop for around
-5 seconds. Enjoy!"""
-)
-
 st.markdown("## Rule: 张量值全零")
 
 df1 = pd.read_csv('./debug_info/tensor/AllZeroValues/result.csv')

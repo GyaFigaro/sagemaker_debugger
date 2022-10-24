@@ -5,16 +5,6 @@ from urllib.error import URLError
 
 show_step = 5
 
-st.set_page_config(page_title="ML Debug: Tensor", page_icon="📈")
-
-st.markdown("# 激活函数规则")
-
-st.write(
-    """This demo illustrates a combination of plotting and animation with
-Streamlit. We're generating a bunch of random numbers in a loop for around
-5 seconds. Enjoy!"""
-)
-
 st.markdown("## Rule: 失活relu")
 
 df1 = pd.read_csv('./debug_info/activationfunction/Dyingrelu/result.csv')

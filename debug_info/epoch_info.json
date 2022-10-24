@@ -1,1 +1,0 @@
-{"epoch_num": 0, "overfitting": false, "underfitting": false, "loss_not_decrease": false, "poor_initialization": false, "update_small": false, "vanishing_gradient": false, "exploding_gradient": false, "all_values_zero": false, "tensors_unchanged": false, "dead_relu": false, "tanh/sigmoid_saturation": false}

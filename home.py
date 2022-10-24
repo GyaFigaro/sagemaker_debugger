@@ -7,7 +7,6 @@ import numpy as np
 import os
 from urllib.error import URLError
 import json
-from display_funcs import overfitting, all_values_zero, tensor_unchanged, dead_relu, tanh_sig_saturation
 
 show_step = 5
 

@@ -6,7 +6,7 @@ from urllib.error import URLError
 st.set_page_config(page_title="Data Demo", page_icon="📊")
 
 st.markdown("# Rule: 过拟合")
-st.sidebar.header("Data Demo")
+
 f = open('./debug_info/result4.txt','r')
 result = f.read()
 f.close()

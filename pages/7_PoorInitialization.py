@@ -16,15 +16,15 @@ else:
 st.title('权重初始化情况检测')
 st.write('数据读取完成')
 
-poor_result = df_result.to_numpy()
-
-num_layers = poor_result.shape[0]
-list_result = []
-for i in range(num_layers):
-    list_result.append(poor_result[i,1])
-if len(list_result)==0:
+if flag == 0:
     st.write('模型参数无初始化不当情况')
-if len(list_result)!=0:
+else:
+    poor_result = df_result.to_numpy()
+    num_layers = poor_result.shape[0]
+    list_result = []
+    for i in range(num_layers):
+        list_result.append(poor_result[i,1])
+    poor_result = df_result.to_numpy()
     st.write('该模型参数初始化不当')
     st.write('初始化不当的层为：')
     for i in list_result:

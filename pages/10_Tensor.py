@@ -5,13 +5,9 @@ import os
 import pandas as pd
 import json
 
-show_steps = 5
+show_step = 5
 
-os
-
-st.set_page_config(page_title="ML Debug: Tensor", page_icon="📈")
-
-st.markdown("# Tensor Rules")
+st.markdown("# Tensor规则")
 
 st.write(
     """This demo illustrates a combination of plotting and animation with
@@ -19,51 +15,48 @@ Streamlit. We're generating a bunch of random numbers in a loop for around
 5 seconds. Enjoy!"""
 )
 
-st.markdown("## Rule: All Values Zero")
-
-
-
-
-# df1 = pd.read_csv('./debug_info/tensor/data.csv')
-
-# progress_bar = st.sidebar.progress(0)
-# status_text = st.sidebar.empty()
-# last_rows = np.random.randn(1, 1)
-# chart = st.line_chart(last_rows)
-
-# for i in range(1, 101):
-#     new_rows = last_rows[-1, :] + np.random.randn(5, 1).cumsum(axis=0)
-#     status_text.text("%i%% Complete" % i)
-#     chart.add_rows(new_rows)
-#     progress_bar.progress(i)
-#     last_rows = new_rows
-#     time.sleep(0.05)
+st.markdown("## Rule: 张量值全零")
 
 df1 = pd.read_csv('./debug_info/tensor/AllZeroValues/result.csv')
+df1.set_index("step")
+step_list = list()
 
-st.dataframe(df1)
+for index in list(df1.index.values):
+    flag = 0
+    step = df1.iloc[index]['step']
+    stats = "step" + str(step) + "中, 张量值为0的层为: "
+    st.markdown(stats)
+    for lname, item in df1.iloc[index].iteritems():
+        if item == 1:
+            st.markdown(lname)
+            flag = 1
+    if flag == 0:
+        st.markdown("无")
+    else:
+        step_list.append(step)
 
-# i = show_steps
-# while i >= 0:
-#     for step in df1.columns():
+if len(step_list) < show_step:
+    show_step = len(step_list)
+for num in step_list[:show_step]:
+    path = './debug_info/tensor/AllZeroValues/' + str(num) + '.csv'
+    df2 = pd.read_csv(path)
+    stats = "step " + str(num) + " 中各张量0值百分比:"
+    st.markdown(stats)
+    st.bar_chart(df2, x="layers", y="percents")
 
-st.markdown("## Rule: Tensor Not Changed")
+st.markdown("## 张量值未变")
 
-df3 = pd.read_csv('./debug_info/tensor/ValuesUnchanged/result.csv')
+df1 = pd.read_csv('./debug_info/tensor/ValuesUnchanged/result.csv')
+df1.set_index("step")
 
-st.dataframe(df3)
-
-    # df1 = pd.read_csv('./debug_info/tensor/data.csv')
-
-    # progress_bar = st.sidebar.progress(0)
-    # status_text = st.sidebar.empty()
-    # last_rows = np.random.randn(1, 1)
-    # chart = st.line_chart(last_rows)
-
-    # for i in range(1, 101):
-    #     new_rows = last_rows[-1, :] + np.random.randn(5, 1).cumsum(axis=0)
-    #     status_text.text("%i%% Complete" % i)
-    #     chart.add_rows(new_rows)
-    #     progress_bar.progress(i)
-    #     last_rows = new_rows
-    #     time.sleep(0.05)
+for index in list(df1.index.values):
+    flag = 0
+    step = df1.iloc[index]['step']
+    stats = "step " + str(step) + "中，张量值未变的层为："
+    st.markdown(stats)
+    for lname, item in df1.iloc[index].iteritems():
+        if item == 1:
+            st.markdown(lname)
+            flag = 1
+    if flag == 0:
+        st.markdown("无")

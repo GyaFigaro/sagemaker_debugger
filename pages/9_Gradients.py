@@ -8,6 +8,18 @@ import seaborn as sns
 df_data = pd.read_csv('./debug_info/gradients/gradients.csv')
 df_result = pd.read_csv('./debug_info/gradients/GradientsResult.csv')
 
+import streamlit as st
+import pandas as pd
+import numpy as np
+import smdebug.pytorch as smd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+df_data = pd.read_csv('./debug_info/gradients/gradients.csv')
+df_result = pd.read_csv('./debug_info/gradients/GradientsResult.csv')
+
+
+st.title('梯度值异常情况检测')
 st.write('数据读取完成')
 
 g_result = df_result.to_numpy()
@@ -22,8 +34,9 @@ if g_result[1,2]==False:
 
 check_data = st.checkbox('查看数据')
 if check_data:
+    st.write("各层梯度值如下：")
     st.dataframe(df_data)
-check_image = st.checkbox('显示图片')
+check_image = st.checkbox('查看图片')
 if check_image:
     g_data = df_data.to_numpy()
     num_steps = g_data.shape[0]
@@ -38,7 +51,7 @@ if check_image:
     sns.set_theme()
     ax = sns.heatmap(new_array,annot=True,fmt=".4f",linewidths=.9000)
     plt.savefig("./debug_info/gradients/ThermalMap")
-    st.write('热力图')
+    st.write('热力图如下：')
     st.image("./debug_info/gradients/ThermalMap.png")
     #layers = st.radio(
         #"Which layer of data graph do you want to view?",

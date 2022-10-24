@@ -49,8 +49,10 @@ class Rule_Loss():
                 if count >= patience:
                     dict = {'steps': steps[:step_index+1], 'losses': losses[:step_index+1]}
                     df = pd.DataFrame(dict)
-                    df.to_csv('./data3.csv', index=False)
-                    # plot_loss(steps[:step_index+1],losses[:step_index+1])
+                    df.to_csv('./debug_info/data3.csv', index=False)
+                    f = open('./debug_info/result3.txt', 'w')
+                    f.write("False")
+                    f.close()
                     self.epoch_info['loss_not_decrease'] = True
                     update_epochfile(self.epoch_info)
                     return False
@@ -62,10 +64,12 @@ class Rule_Loss():
         dict = {'steps': steps, 'losses': losses}
         df = pd.DataFrame(dict)
         df.to_csv('./debug_info/data3.csv', index=False)
-        # plot_loss(steps, losses)
+        f = open('./debug_info/result3.txt', 'w')
+        f.write("True")
+        f.close()
         return True
 
-    def Overfitting(self, start_step=0, patience=1, ratio_threshold=0.1):
+    def Overfitting(self, start_step=0, patience=10, ratio_threshold=0.1):
         loss_name_test = self.base_trial.tensor_names(collection='losses', mode=smd.modes.EVAL)
         steps_test =self.base_trial.steps(mode=smd.modes.EVAL)
         loss_test = get_data(self.base_trial, loss_name_test[0], steps_test, smd.modes.EVAL)
@@ -90,17 +94,24 @@ class Rule_Loss():
             if ratio > ratio_threshold:
                 cnt += 1
             if cnt > patience:
-                self.epoch_info['overfitting'] = 1
+                f = open('./debug_info/result4.txt', 'w')
+                f.write("False")
+                f.close()
+                self.epoch_info['overfitting'] = True
                 update_epochfile(self.epoch_info)
                 return False
+
+        f = open('./debug_info/result4.txt', 'w')
+        f.write("True")
+        f.close()
         return True
 
-    def Underfitting(self, method_choose, accuracy_path, accuracy_threshold, loss_threshold=0.1, min_steps=10,
+    def Underfitting(self, method_choose, accuracy_path, accuracy_threshold, start_step=0, loss_threshold=0.1, min_steps=10,
                     different=0.01):
         if method_choose:
-            return accuracy_test(accuracy_path, accuracy_threshold, self.epoch_info)
+            return accuracy_test(self.base_trial, start_step, accuracy_path, accuracy_threshold, self.epoch_info)
         else:
-            return loss_test(self.base_trial, loss_threshold, min_steps, different, self.epoch_info)
+            return loss_test(self.base_trial, start_step, loss_threshold, min_steps, different, self.epoch_info)
 
     def Classifier_Confusion(self, category_no, labels, predictions, min_diag=0.9, max_off_diag=0.1):
         cnt = count(labels, predictions, category_no)
@@ -111,10 +122,19 @@ class Rule_Loss():
         #draw_table(result, category_no)
         for i in range(category_no):
             if result[i][i] < min_diag:
+                f = open('./debug_info/result5.txt', 'w')
+                f.write("False")
+                f.close()
                 return False
             for j in range(category_no):
                 if result[j][i] > max_off_diag:
+                    f = open('./debug_info/result5.txt', 'w')
+                    f.write("False")
+                    f.close()
                     return False
+        f = open('./debug_info/result5.txt', 'w')
+        f.write("True")
+        f.close()
         return True
 
 
@@ -180,19 +200,7 @@ def loss_base_test(loss, steps, different, threshold, min_step):
         pre_loss = loss[i]
     return True
 
-def accuracy_test(accuracy_path, accuracy_threshold, epoch_info):
-    accuracy = np.load(accuracy_path)
-    train_accuracy = accuracy[0]
-    test_accuracy = accuracy[1]
-    if train_accuracy < accuracy_threshold or test_accuracy < accuracy_threshold:
-        epoch_info['underfitting'] = True
-        update_epochfile(epoch_info)
-        return False
-    else:
-        return True
-
-
-def loss_test(trial, loss_threshold, min_steps, different_percent, epoch_info):
+def accuracy_test(trial, start_step, accuracy_path, accuracy_threshold, epoch_info):
     loss_name_test = trial.tensor_names(collection='losses', mode=smd.modes.EVAL)
     steps_test = trial.steps(mode=smd.modes.EVAL)
     loss_test = get_data(trial, loss_name_test[0], steps_test, smd.modes.EVAL)
@@ -201,20 +209,64 @@ def loss_test(trial, loss_threshold, min_steps, different_percent, epoch_info):
     steps_train = trial.steps(mode=smd.modes.TRAIN)
     loss_train = get_data(trial, loss_name_train[0], steps_train, smd.modes.TRAIN)
 
-    dict1 = {'steps_test': steps_test, 'loss_test': loss_test}
-    df = pd.DataFrame(dict1)
-    df.to_csv('./debug_info/data61.csv', index=False)
+    n = len(steps_test)
+    m = len(steps_train)
+    a = [2] * n
+    if start_step + n > m:
+        print("start_step is out of range!")
+        return False
+    dict = {'steps': steps_test, 'test_losses': loss_test, 'train_losses':loss_train[start_step:start_step + n], 'x_reference':a}
+    df = pd.DataFrame(dict)
+    df.to_csv('./debug_info/data6.csv', index=False)
 
-    dict2 = {'steps_train': steps_train, 'loss_train': loss_train}
-    df = pd.DataFrame(dict2)
-    df.to_csv('./debug_info/data62.csv', index=False)
+    accuracy = np.load(accuracy_path)
+    train_accuracy = accuracy[0]
+    test_accuracy = accuracy[1]
+    if train_accuracy < accuracy_threshold or test_accuracy < accuracy_threshold:
+        f = open('./debug_info/result6.txt', 'w')
+        f.write("False")
+        f.close()
+        epoch_info['underfitting'] = True
+        update_epochfile(epoch_info)
+        return False
+    else:
+        f = open('./debug_info/result6.txt', 'w')
+        f.write("True")
+        f.close()
+        return True
+
+
+def loss_test(trial, start_step, loss_threshold, min_steps, different_percent, epoch_info):
+    loss_name_test = trial.tensor_names(collection='losses', mode=smd.modes.EVAL)
+    steps_test = trial.steps(mode=smd.modes.EVAL)
+    loss_test = get_data(trial, loss_name_test[0], steps_test, smd.modes.EVAL)
+
+    loss_name_train = trial.tensor_names(collection='losses', mode=smd.modes.TRAIN)
+    steps_train = trial.steps(mode=smd.modes.TRAIN)
+    loss_train = get_data(trial, loss_name_train[0], steps_train, smd.modes.TRAIN)
+
+    n = len(steps_test)
+    m = len(steps_train)
+    a = [2] * n
+    if start_step + n > m:
+        print("start_step is out of range!")
+        return False
+    dict = {'steps': steps_test, 'test_losses': loss_test, 'train_losses':loss_train[start_step:start_step + n], 'x_reference':a}
+    df = pd.DataFrame(dict)
+    df.to_csv('./debug_info/data6.csv', index=False)
 
     if loss_base_test(loss_train, steps_train, different_percent, loss_threshold, min_steps) and loss_base_test(
             loss_test, steps_test, different_percent, loss_threshold, min_steps):
-        epoch_info['underfitting'] = True
-        update_epochfile(epoch_info)
+        f = open('./debug_info/result6.txt', 'w')
+        f.write("True")
+        f.close()
         return True
     else:
+        epoch_info['underfitting'] = True
+        update_epochfile(epoch_info)
+        f = open('./debug_info/result6.txt', 'w')
+        f.write("False")
+        f.close()
         return False
 
 # 统计

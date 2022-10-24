@@ -30,8 +30,10 @@ class Net(nn.Module):
         super(Net, self).__init__()
 
         self.add_module("conv1", nn.Conv2d(1, 20, 5, 1))
+        self.add_module("drop1",nn.Dropout(p = 0.8))
         self.add_module("sigmoid", nn.Sigmoid())
         self.add_module("max_pool", nn.MaxPool2d(2, stride=2))
+        self.add_module("drop2",nn.Dropout(p = 0.8))
         self.add_module("conv2", nn.Conv2d(20, 50, 5, 1))
         self.add_module("tanh", nn.Tanh())
         self.add_module("max_pool2", nn.MaxPool2d(2, stride=2))
@@ -40,8 +42,10 @@ class Net(nn.Module):
         self.add_module("fc2", nn.Linear(500, 10))
 
     def forward(self, x):
-        x = self.sigmoid(self.conv1(x))
+        x = self.drop1(self.conv1(x))
+        x = self.sigmoid(self.drop1(x))
         x = self.max_pool(x)
+        x = self.drop2(x)
         x = self.tanh(self.conv2(x))
         x = self.max_pool2(x)
         x = x.view(-1, 4 * 4 * 50)

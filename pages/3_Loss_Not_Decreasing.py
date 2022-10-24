@@ -7,10 +7,17 @@ st.set_page_config(page_title="Data Demo", page_icon="📊")
 
 st.markdown("# Loss Not Decreasing")
 st.sidebar.header("Data Demo")
-st.write(
-    """This demo shows how to use `st.write` to visualize Pandas DataFrames.
-(Data courtesy of the [UN Data Explorer](http://data.un.org/Explorer.aspx).)"""
-)
+f = open('./debug_info/result3.txt','r')
+result = f.read()
+f.close()
+if result=="True":
+    st.write(
+        """无损失不减少"""
+    )
+else:
+    st.write(
+        """存在损失不减少"""
+    )
 DATE_COLUMN = 'date/time'
 
 def load_data(nrows):
@@ -22,8 +29,11 @@ data = load_data(3)
 st.line_chart(data,x="steps",y="losses")
 
 expander = st.expander("See explanation")
-expander.write("""
-    The chart above shows some numbers I picked for you.
-    I rolled actual dice for these, so they're *guaranteed* to
-    be random.
-""")
+if result=="True":
+    expander.write("""
+        无损失不减少，请继续您的工作。
+    """)
+else:
+    expander.write("""
+        建议调整模型参数或减少模型训练次数。
+    """)

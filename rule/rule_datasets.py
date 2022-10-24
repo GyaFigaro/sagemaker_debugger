@@ -19,9 +19,14 @@ class Rule_Datasets():
         df = pd.DataFrame(dict)
         df.to_csv('./debug_info/data.csv', index=False)  # path需要修改
         if rate >= threshold_imbalance:
-            #draw_bar(labels, count)
+            f = open('./debug_info/result1.txt', 'w')
+            f.write("False")
+            f.close()
             return False
         else:
+            f = open('./debug_info/result1.txt', 'w')
+            f.write("True")
+            f.close()
             return True
 
     def Not_Normalized_Data(self, train_loader, threshold_mean=0.2, threshold_samples=500, channel=1):
@@ -42,17 +47,23 @@ class Rule_Datasets():
                 dict = {'quants': quants, 'means': means}
                 df = pd.DataFrame(dict)
                 df.to_csv('./debug_info/data2.csv', index=False)  # path需要修改
-                # draw_point(quants, means)
+                f = open('./debug_info/result2.txt', 'w')
+                f.write("1")
+                f.close()
                 return False
         if image_cnt <= threshold_samples:
-            print("The number of samples is not enough!")
+            f = open('./debug_info/result2.txt', 'w')
+            f.write("2")
+            f.close()
             return False
 
         quants = [i for i in range(cnt)]
         dict = {'quants': quants, 'means': means}
         df = pd.DataFrame(dict)
         df.to_csv('./debug_info/data2.csv', index=False)  # path需要修改
-        # draw_point(quants, means)
+        f = open('./debug_info/result2.txt', 'w')
+        f.write("0")
+        f.close()
         return True
 
 def data_process(train_loader):

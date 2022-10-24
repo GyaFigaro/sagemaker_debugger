@@ -3,10 +3,13 @@ NLLLoss_output_0,0.0
 Net_output_0,0.0
 conv1_output_0,0.0
 conv2_output_0,0.0
+drop1_output_0,0.8006754557291667
+drop1_output_1,0.9599758572048611
+drop2_output_0,0.8001573350694444
 fc1_output_0,0.0
 fc2_output_0,0.0
 max_pool2_output_0,0.0
 max_pool_output_0,0.0
-relu_output_0,0.3734375
-sigmoid_output_0,0.0
+relu_output_0,0.59925
+sigmoid_output_0,1.3563368055555556e-06
 tanh_output_0,0.0

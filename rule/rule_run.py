@@ -60,7 +60,7 @@ def epoch_debug(epoch, batch_num):
 
     print(rule_loss.Loss_Not_Decreasing(increase_threshold_percent=100))
     print(rule_loss.Overfitting(0))
-    print(rule_loss.Underfitting(0, accuracy_path, 90))
+    print(rule_loss.Underfitting(1, accuracy_path, 90))
     
     rule_gradients.gradients()
 

@@ -7,25 +7,29 @@ st.set_page_config(page_title="Data Demo", page_icon="📊")
 
 st.markdown("# Input Imbalance")
 st.sidebar.header("Data Demo")
-st.write(
-    """This demo shows how to use `st.write` to visualize Pandas DataFrames.
-(Data courtesy of the [UN Data Explorer](http://data.un.org/Explorer.aspx).)"""
-)
+
+data = pd.read_csv('./debug_info/data.csv')
+
+f = open('./debug_info/result1.txt','r')
+result = f.read()
+f.close()
+if result=="True":
+    st.write(
+        """无数据集不平衡"""
+    )
+else:
+    st.write(
+        """存在数据集不平衡"""
+    )
 DATE_COLUMN = 'date/time'
-
-def load_data(nrows):
-    data = pd.read_csv('./debug_info/data.csv')
-    return data
-
-data = load_data(3)
-
-
-
 st.bar_chart(data,x='labels',y='count')
 
 expander = st.expander("See explanation")
-expander.write("""
-    The chart above shows some numbers I picked for you.
-    I rolled actual dice for these, so they're *guaranteed* to
-    be random.
-""")
+if result=="True":
+    expander.write("""
+        无数据集不平衡，请继续您的工作。
+    """)
+else:
+    expander.write("""
+        建议根据图表增添数据过少的类的数据。
+    """)

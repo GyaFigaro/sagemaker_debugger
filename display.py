@@ -26,70 +26,35 @@ def load_result(epoch_info, show_step):
         # 按rule名，对每条rule的结果进行展示
 
         if key == 'overfitting':
-            col1, col2 = st.columns(2)
             if epoch_info[key] == True:   # true 为检测到问题，false相反
-                with col1:
-                    st.info('过拟合:   已检测到该问题')
-                with col2:
-                    should_show = st.checkbox('展示规则: 过拟合检测结果')
-                if should_show:
-                    overfitting()
-                    st.markdown('---')
+                st.info('过拟合:   已检测到该问题')
             else:
-                with col1:
-                    st.info('过拟合:   未检出')
+                st.info('过拟合:   未检出')
+        if key == 'underfitting':
+            if epoch_info[key] == True:   # true 为检测到问题，false相反
+                st.info('过拟合:   已检测到该问题')
+            else:
+                st.info('过拟合:   未检出')
         if key == 'all_values_zero':
-            col1, col2 = st.columns(2)
             if epoch_info[key] == True:
-                with col1:
-                    st.info('张量值全零:   已检测到该问题')
-                with col2:
-                    should_show = st.checkbox('展示规则：张量值全零检测结果')
-                if should_show:
-                    all_values_zero(show_step)
-                    st.markdown('---')
+                st.info('张量值全零:   已检测到该问题')
             else:
-                with col1:
-                    st.info('张量值全零:   未检测出')
+                st.info('张量值全零:   未检测出')
         if key == 'tensors_unchanged':
-            col1, col2 = st.columns(2)
-            if epoch_info[key] == False:
-                with col1:
-                    st.info('张量值未变:   已检测到该问题')
-                with col2:
-                    should_show = st.checkbox('展示规则：张量值未变检测结果')
-                if should_show:
-                    tensor_unchanged()
-                    st.markdown('---')
+            if epoch_info[key] == True:
+                st.info('张量值未变:   已检测到该问题')
             else:
-                with col1:
-                    st.info('张量值全零:   未检测出')
+                st.info('张量值全零:   未检测出')
         if key == 'dead_relu':
-            col1, col2 = st.columns(2)
-            if epoch_info[key] == False:
-                with col1:
-                    st.info('失活relu:   已检测到该问题')
-                with col2:
-                    should_show = st.checkbox('展示规则: 失活relu检测结果')
-                if should_show:
-                    dead_relu(show_step)
-                    st.markdown('---')
+            if epoch_info[key] == True:
+                st.info('失活relu:   已检测到该问题')
             else:
-                with col1:
-                    st.info('失活relu:   未检测出')
+                st.info('失活relu:   未检测出')
         if key == 'tanh/sigmoid_saturation':
-            col1, col2 = st.columns(2)
-            if epoch_info[key] == False:
-                with col1:
-                    st.info('tanh/sigmoid饱和:   已检测到该问题')
-                with col2:
-                    should_show = st.checkbox('展示规则: tanh/sigmoid饱和检测结果')
-                if should_show:
-                    tanh_sig_saturation(show_step)
-                    st.markdown('---')
+            if epoch_info[key] == True:
+                st.info('tanh/sigmoid饱和:   已检测到该问题')
             else:
-                with col1:
-                    st.info('tanh/sigmoid饱和:   未检测出')
+                st.info('tanh/sigmoid饱和:   未检测出')
 
 
 st.set_page_config(page_title="ML Debug Demo", page_icon="📊")

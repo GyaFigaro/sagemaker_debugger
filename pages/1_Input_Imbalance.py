@@ -5,7 +5,7 @@ from urllib.error import URLError
 
 st.set_page_config(page_title="Data Demo", page_icon="📊")
 
-st.markdown("# Input Imbalance")
+st.markdown("# Rule: 数据不平衡")
 st.sidebar.header("Data Demo")
 
 data = pd.read_csv('./debug_info/data.csv')
